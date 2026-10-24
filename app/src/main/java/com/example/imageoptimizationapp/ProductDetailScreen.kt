@@ -11,6 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -38,7 +39,12 @@ fun ProductDetailScreen(
         )
 
         AsyncImage(
-            model = product.imageUrl,
+            model = createImageRequest(
+                context = LocalContext.current,
+                imageUrl = product.imageUrl,
+                width = 800,
+                height = 600
+            ),
             contentDescription = product.name,
             placeholder = painterResource(R.drawable.placeholder_image),
             error = painterResource(R.drawable.error_image),

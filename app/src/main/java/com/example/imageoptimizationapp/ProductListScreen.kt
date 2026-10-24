@@ -1,7 +1,6 @@
 package com.example.imageoptimizationapp
 
 import androidx.compose.foundation.clickable
-import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -20,9 +19,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+
 
 @Composable
 fun ProductListScreen(
@@ -32,6 +34,14 @@ fun ProductListScreen(
     LazyColumn(
         modifier = Modifier.fillMaxSize()
     ) {
+
+        item {
+            Text(
+                text = "Image Mode: ${ImageConfig.currentMode}",
+                fontSize = 16.sp,
+                modifier = Modifier.padding(12.dp)
+            )
+        }
 
         items(products) { product ->
 
@@ -55,7 +65,12 @@ fun ProductListScreen(
                 ) {
 
                     AsyncImage(
-                        model = product.imageUrl,
+                        model = createImageRequest(
+                            context = LocalContext.current,
+                            imageUrl = product.imageUrl,
+                            width = 200,
+                            height = 200
+                        ),
                         contentDescription = product.name,
                         placeholder = painterResource(R.drawable.placeholder_image),
                         error = painterResource(R.drawable.error_image),
