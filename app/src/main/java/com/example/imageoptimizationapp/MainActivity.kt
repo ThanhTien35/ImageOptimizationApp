@@ -8,7 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.example.imageoptimizationapp.ui.theme.ImageOptimizationAppTheme
-
+import androidx.compose.foundation.lazy.rememberLazyListState
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -22,6 +22,8 @@ class MainActivity : ComponentActivity() {
                     getProducts()
                 }
 
+                val listState = rememberLazyListState()
+
                 var selectedProduct by remember {
                     mutableStateOf<Product?>(null)
                 }
@@ -30,6 +32,7 @@ class MainActivity : ComponentActivity() {
 
                     ProductListScreen(
                         products = products,
+                        listState = listState,
                         onProductClick = { product ->
                             selectedProduct = product
                         }

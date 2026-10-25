@@ -24,16 +24,21 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
-
+import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.lazy.LazyListState
 
 @Composable
 fun ProductListScreen(
     products: List<Product>,
+    listState: LazyListState,
     onProductClick: (Product) -> Unit
 ) {
     LazyColumn(
-        modifier = Modifier.fillMaxSize()
-    ) {
+        state = listState,
+        modifier = Modifier
+            .fillMaxSize()
+            .safeDrawingPadding()
+    )  {
 
         item {
             Text(
