@@ -1,462 +1,156 @@
 # ImageOptimizationApp
 
-## 1. Giới thiệu
+Ứng dụng Android minh họa và đánh giá các kỹ thuật **tối ưu tải, lưu trữ đệm và hiển thị hình ảnh** trong ứng dụng Android.
 
-**ImageOptimizationApp** là ứng dụng Android được xây dựng bằng **Kotlin và Jetpack Compose**, phục vụ đề tài:
-
-> **Tối ưu tải, lưu trữ đệm và hiển thị hình ảnh trong ứng dụng Android**
-
-Mục tiêu của project là nghiên cứu và thực nghiệm các kỹ thuật tải và hiển thị hình ảnh trong Android, tập trung vào:
-
-- Tải ảnh từ URL.
-- Tải ảnh bất đồng bộ.
-- Hiển thị trạng thái Loading và Error.
-- Hiển thị danh sách lớn bằng `LazyColumn`.
-- Tối ưu kích thước ảnh theo vị trí hiển thị.
-- Sử dụng Memory Cache và Disk Cache.
-- Xây dựng hai chế độ **Baseline** và **Optimized** để phục vụ so sánh hiệu năng.
-- Chuẩn bị cho các phép đo thời gian tải, bộ nhớ, CPU và độ mượt giao diện.
-
-Project được phát triển theo từng giai đoạn để dễ kiểm thử, so sánh và thu thập minh chứng.
+Project được xây dựng bằng **Kotlin + Jetpack Compose**, sử dụng **Coil 3** để tải ảnh từ URL. Ứng dụng cung cấp hai chế độ `BASELINE` và `OPTIMIZED` để thực hiện các thử nghiệm và so sánh hiệu năng tải ảnh.
 
 ---
 
-# 2. Công nghệ sử dụng
+## 1. Thông tin project
 
+- **Project:** ImageOptimizationApp
+- **Package:** `com.example.imageoptimizationapp`
 - **Language:** Kotlin
-- **Platform:** Android
-- **UI Framework:** Jetpack Compose
+- **UI:** Jetpack Compose
 - **Image Loading Library:** Coil 3.3.0
-- **Network support:** Coil Network OkHttp
-- **List:** LazyColumn
-- **IDE:** Android Studio
-- **Version Control:** Git + GitHub
-- **Testing Device:** Pixel 5 Emulator – API 30
-- **Minimum SDK:** 24
-- **Target SDK:** 37
-- **Compile SDK:** 37
-- **Java Compatibility:** Java 11
+- **Minimum SDK:** API 24
+- **Target SDK:** API 37
+- **Thiết bị kiểm thử:** Pixel 5 Emulator
+- **Android kiểm thử:** Android 11 - API 30
+- **Số lượng sản phẩm mặc định:** 100
+- **Nguồn ảnh:** Remote URL
+- **Kiến trúc giao diện:** Product List + Product Detail
 
 ---
 
-# 3. Cấu trúc project
+# 2. Mục tiêu
 
-Các file chính hiện tại:
+Project tập trung nghiên cứu và thực nghiệm các vấn đề liên quan đến việc tải và hiển thị nhiều hình ảnh trong ứng dụng Android.
 
-```text
-ImageOptimizationApp
-│
-├── app
-│   └── src/main
-│       ├── AndroidManifest.xml
-│       │
-│       ├── java/com/example/imageoptimizationapp
-│       │   ├── MainActivity.kt
-│       │   ├── Product.kt
-│       │   ├── ProductListScreen.kt
-│       │   ├── ProductDetailScreen.kt
-│       │   ├── ImageConfig.kt
-│       │   └── ImageRequestFactory.kt
-│       │
-│       └── res
-│           └── drawable
-│               ├── placeholder_image
-│               └── error_image
-│
-├── gradle
-│   └── libs.versions.toml
-│
-└── README.md
-```
+Các mục tiêu chính:
+
+- Tải hình ảnh bất đồng bộ từ Internet.
+- Hiển thị danh sách lớn bằng `LazyColumn`.
+- Sử dụng loading placeholder trong thời gian chờ ảnh.
+- Xử lý URL lỗi bằng error placeholder.
+- Hạn chế công việc nặng trên Main Thread.
+- Nghiên cứu Memory Cache và Disk Cache.
+- Resize/downsample ảnh theo kích thước hiển thị.
+- So sánh chế độ Baseline và Optimized.
+- Theo dõi CPU và Memory bằng Android Studio Profiler.
+- Kiểm tra ứng dụng với 100, 500 và 1000 sản phẩm.
+- Kiểm tra Fast Scroll, Offline, Bad URL và High-resolution Image.
+- Đánh giá sự khác biệt trước và sau tối ưu.
 
 ---
 
-# 4. Giai đoạn 1 – Xây dựng ứng dụng cơ bản
-
-## 4.1. Mục tiêu
-
-Giai đoạn 1 tập trung xây dựng cấu trúc cơ bản của ứng dụng:
-
-- Tạo Android Kotlin project.
-- Sử dụng Jetpack Compose.
-- Xây dựng `Product` model.
-- Sinh danh sách 100 sản phẩm.
-- Mỗi sản phẩm có URL hình ảnh riêng.
-- Xây dựng Product List.
-- Xây dựng Product Detail.
-- Cho phép chuyển từ danh sách sang màn hình chi tiết.
-
----
-
-## 4.2. Product Model
-
-Mỗi sản phẩm gồm:
-
-```kotlin
-data class Product(
-    val id: Int,
-    val name: String,
-    val imageUrl: String,
-    val description: String
-)
-```
-
-Các thuộc tính:
-
-| Thuộc tính | Ý nghĩa |
-|---|---|
-| `id` | ID của sản phẩm |
-| `name` | Tên sản phẩm |
-| `imageUrl` | URL hình ảnh |
-| `description` | Mô tả sản phẩm |
-
----
-
-## 4.3. Tạo 100 sản phẩm
-
-Ứng dụng tạo tự động 100 sản phẩm bằng:
-
-```kotlin
-return List(100) { index ->
-    Product(
-        id = index + 1,
-        name = "Product ${index + 1}",
-        imageUrl = "https://picsum.photos/seed/${index + 1}/800/600",
-        description = "Description for Product ${index + 1}"
-    )
-}
-```
-
-Mỗi sản phẩm sử dụng một `seed` khác nhau để nhận ảnh khác nhau.
-
-Ví dụ:
-
-```text
-Product 1  → /seed/1/800/600
-Product 2  → /seed/2/800/600
-Product 3  → /seed/3/800/600
-...
-Product 100 → /seed/100/800/600
-```
-
----
-
-## 4.4. Product List
-
-Danh sách sản phẩm được xây dựng bằng:
-
-```text
-LazyColumn
-```
-
-`LazyColumn` chỉ compose các item cần thiết trong vùng hiển thị và phù hợp với danh sách có nhiều phần tử.
-
-Mỗi item hiển thị:
-
-```text
-[Image]  Product Name
-         Description
-```
-
-Ảnh trên Product List được hiển thị ở kích thước:
-
-```kotlin
-Modifier.size(100.dp)
-```
-
----
-
-## 4.5. Product Detail
-
-Khi người dùng nhấn vào một Product:
-
-```text
-Product List
-      ↓
-Click Product
-      ↓
-Product Detail
-```
-
-Màn hình Detail hiển thị:
-
-- Nút Back.
-- Hình ảnh lớn.
-- Product Name.
-- Product Description.
-
-Ảnh Detail được hiển thị với:
-
-```kotlin
-Modifier
-    .fillMaxWidth()
-    .height(300.dp)
-```
-
----
-
-## 4.6. Quản lý Product được chọn
-
-`MainActivity` sử dụng Compose State để xác định màn hình cần hiển thị.
-
-```kotlin
-var selectedProduct by remember {
-    mutableStateOf<Product?>(null)
-}
-```
-
-Nếu:
-
-```text
-selectedProduct == null
-```
-
-ứng dụng hiển thị:
-
-```text
-ProductListScreen
-```
-
-Nếu có Product được chọn:
-
-```text
-ProductDetailScreen
-```
-
----
-
-## 4.7. Kết quả Giai đoạn 1
-
-Đã hoàn thành:
-
-- Android Kotlin Project.
-- Jetpack Compose.
-- Product Model.
-- 100 Products.
-- 100 URL hình ảnh.
-- LazyColumn.
-- Product List Screen.
-- Product Detail Screen.
-- Điều hướng List → Detail → Back.
-
----
-
-# 5. Giai đoạn 2 – Coil, Placeholder và Async Image Loading
-
-## 5.1. Mục tiêu
-
-Giai đoạn 2 tập trung vào việc tải hình ảnh từ Internet một cách bất đồng bộ.
-
-Các nội dung triển khai:
-
-- Coil 3.
-- Coil Compose.
-- Coil Network OkHttp.
-- `AsyncImage`.
-- `ImageRequest`.
-- Loading Placeholder.
-- Error Placeholder.
-- Kiểm tra URL lỗi.
-- Kiểm tra mạng chậm.
-- Kiểm tra cuộn danh sách trong khi ảnh đang tải.
-
----
-
-## 5.2. Coil dependencies
+# 3. Công nghệ sử dụng
 
 Project sử dụng:
+
+- Kotlin
+- Android SDK
+- Jetpack Compose
+- Material 3
+- LazyColumn
+- Coil 3
+- Coil Network OkHttp
+- Android Studio Profiler
+- Android Emulator
+
+Các dependency Coil chính:
 
 ```kotlin
 implementation(libs.coil.compose)
 implementation(libs.coil.network.okhttp)
 ```
 
-Phiên bản Coil:
-
-```text
-Coil 3.3.0
-```
-
-`coil-compose` được sử dụng để tích hợp Coil với Jetpack Compose.
-
-`coil-network-okhttp` cung cấp khả năng tải hình ảnh qua HTTP/HTTPS.
-
----
-
-## 5.3. Internet Permission
-
-Ứng dụng cần quyền Internet:
+Ứng dụng cần quyền truy cập Internet:
 
 ```xml
 <uses-permission android:name="android.permission.INTERNET" />
 ```
 
-Quyền này được khai báo trong:
-
-```text
-AndroidManifest.xml
-```
-
 ---
 
-## 5.4. AsyncImage
+# 4. Cấu trúc project
 
-Hình ảnh được tải bằng `AsyncImage`.
-
-Cấu trúc ban đầu:
-
-```kotlin
-AsyncImage(
-    model = ImageRequest.Builder(LocalContext.current)
-        .data(product.imageUrl)
-        .build(),
-    contentDescription = product.name,
-    placeholder = painterResource(R.drawable.placeholder_image),
-    error = painterResource(R.drawable.error_image),
-    modifier = Modifier.size(100.dp),
-    contentScale = ContentScale.Crop
-)
-```
-
-Coil thực hiện quá trình tải ảnh mà không yêu cầu thực hiện công việc mạng nặng trực tiếp trên Main Thread.
-
----
-
-## 5.5. Loading Placeholder
-
-Trong thời gian ảnh chưa tải xong, ứng dụng hiển thị:
-
-```kotlin
-placeholder = painterResource(
-    R.drawable.placeholder_image
-)
-```
-
-Loading Placeholder được kiểm thử bằng cách:
-
-1. Giảm tốc độ mạng của Android Emulator.
-2. Xóa dữ liệu ứng dụng khi cần cho lượt kiểm thử.
-3. Khởi động lại ứng dụng.
-4. Quan sát placeholder trước khi ảnh thật xuất hiện.
-
-Kết quả:
+Các file Kotlin chính:
 
 ```text
-Loading Placeholder → PASS
+app/src/main/java/com/example/imageoptimizationapp/
+
+├── MainActivity.kt
+├── Product.kt
+├── ProductListScreen.kt
+├── ProductDetailScreen.kt
+├── ImageConfig.kt
+├── ImageRequestFactory.kt
+└── ui.theme/
 ```
 
----
+Vai trò của từng file:
 
-## 5.6. Error Placeholder
+### `MainActivity.kt`
 
-Nếu URL không hợp lệ hoặc server không trả được hình ảnh:
+Quản lý màn hình hiện tại của ứng dụng và state giữa Product List và Product Detail.
 
-```kotlin
-error = painterResource(
-    R.drawable.error_image
-)
-```
-
-Trong quá trình kiểm thử, URL của Product 1 được tạm thời thay bằng một URL không hợp lệ.
-
-Kết quả:
+Ngoài ra, `LazyListState` được giữ ở cấp `MainActivity` để bảo toàn vị trí cuộn khi người dùng:
 
 ```text
-Product 1 → Error Image
-Product 2+ → Normal Image
+Product List
+→ Product Detail
+→ Back
+→ Product List
 ```
 
-Sau khi kiểm thử, URL Product 1 được khôi phục về URL bình thường.
+Ứng dụng sẽ quay lại vị trí trước đó thay vì trở về Product 1.
 
-Kết quả:
+### `Product.kt`
+
+Định nghĩa model `Product` và tạo danh sách sản phẩm phục vụ kiểm thử.
+
+Mỗi Product gồm:
 
 ```text
-Error Placeholder → PASS
+id
+name
+imageUrl
+description
 ```
 
----
+Danh sách mặc định hiện có **100 sản phẩm**.
 
-## 5.7. Async Loading và Fast Scroll
+### `ProductListScreen.kt`
 
-Ứng dụng được kiểm tra bằng cách cuộn nhanh `LazyColumn` trong khi hình ảnh vẫn đang tải.
-
-Mục tiêu:
-
-- UI vẫn phản hồi.
-- Không crash.
-- Không đóng băng giao diện.
-- Các item phía dưới tiếp tục hiển thị placeholder trong khi chờ ảnh.
-- Hình ảnh được cập nhật sau khi tải hoàn tất.
-
-Kết quả kiểm thử ban đầu:
+Hiển thị danh sách sản phẩm bằng:
 
 ```text
-Async Loading → PASS
-Fast Scroll during loading → PASS
+LazyColumn
 ```
 
-Việc đo jank/frame rendering chính thức sẽ được thực hiện trong giai đoạn kiểm thử hiệu năng.
-
----
-
-# 6. Vấn đề thực tế – HTTP 503 từ Picsum
-
-Trong quá trình phát triển, dịch vụ hình ảnh Picsum từng trả về:
+Mỗi item gồm:
 
 ```text
-Error 503
-Maximum threads for service reached
+Image
+Product Name
+Description
 ```
 
-Lỗi được xác nhận bằng cách truy cập trực tiếp URL ảnh trong Chrome của Android Emulator.
+Ảnh được tải bất đồng bộ bằng Coil.
 
-Điều này cho thấy lỗi tại thời điểm đó đến từ image server chứ không phải Android UI hoặc Coil configuration.
+### `ProductDetailScreen.kt`
 
-Khi server trả lỗi:
+Hiển thị:
 
-```text
-Picsum
-   ↓
-HTTP 503
-   ↓
-Coil request fails
-   ↓
-error_image
-```
+- Ảnh sản phẩm kích thước lớn hơn.
+- Tên sản phẩm.
+- Mô tả sản phẩm.
+- Nút Back.
 
-Khi server hoạt động trở lại, hình ảnh được tải bình thường.
+### `ImageConfig.kt`
 
-Vấn đề này cũng cho thấy khi thực hiện benchmark cần kiểm soát điều kiện mạng và trạng thái server để hạn chế sai lệch kết quả.
-
----
-
-# 7. Giai đoạn 3 – Baseline và Optimized Image Loading
-
-## 7.1. Mục tiêu
-
-Giai đoạn 3 xây dựng hai chế độ:
-
-```text
-BASELINE
-```
-
-và:
-
-```text
-OPTIMIZED
-```
-
-Mục tiêu là chuẩn bị hai cấu hình tải ảnh để thực hiện so sánh hiệu năng trong giai đoạn tiếp theo.
-
----
-
-# 8. ImageMode
-
-Hai chế độ được định nghĩa trong:
-
-```text
-ImageConfig.kt
-```
+Quản lý chế độ tải ảnh:
 
 ```kotlin
 enum class ImageMode {
@@ -465,384 +159,303 @@ enum class ImageMode {
 }
 ```
 
-Chế độ hiện tại được chọn bằng:
+Có thể chuyển chế độ kiểm thử bằng:
 
 ```kotlin
-object ImageConfig {
-    var currentMode = ImageMode.BASELINE
-}
+var currentMode = ImageMode.BASELINE
 ```
 
-Có thể chuyển sang Optimized bằng:
+hoặc:
 
 ```kotlin
 var currentMode = ImageMode.OPTIMIZED
 ```
 
----
+### `ImageRequestFactory.kt`
 
-# 9. ImageRequestFactory
+Tạo `ImageRequest` tương ứng với từng chế độ.
 
-Logic tạo `ImageRequest` được tách khỏi UI và đưa vào:
+Luồng tổng quát:
 
 ```text
-ImageRequestFactory.kt
+ImageConfig
+     ↓
+BASELINE / OPTIMIZED
+     ↓
+ImageRequestFactory
+     ↓
+Coil ImageRequest
+     ↓
+AsyncImage
 ```
+
+---
+
+# 5. Giai đoạn 1 - Basic Application
+
+## 5.1. Mục tiêu
+
+Xây dựng ứng dụng Android cơ bản gồm:
+
+- Kotlin project.
+- Product model.
+- Danh sách sản phẩm.
+- 100 URL ảnh.
+- Product List.
+- Product Detail.
+- Điều hướng List → Detail → Back.
+
+## 5.2. Product List
+
+Danh sách được hiển thị bằng `LazyColumn`.
+
+Ứng dụng tạo:
+
+```text
+Product 1
+Product 2
+...
+Product 100
+```
+
+Mỗi sản phẩm có URL ảnh riêng.
+
+Việc sử dụng `LazyColumn` giúp chỉ compose các item cần thiết trên màn hình thay vì render toàn bộ 100 item cùng lúc.
+
+## 5.3. Product Detail
+
+Khi người dùng chọn một sản phẩm:
+
+```text
+Product List
+      ↓
+Product Detail
+```
+
+Detail Screen hiển thị ảnh lớn hơn cùng thông tin của sản phẩm.
+
+Người dùng có thể bấm Back để trở về danh sách.
+
+## 5.4. Minh chứng
+
+Ảnh của Stage 1 được lưu tại:
+
+```text
+pic/stage 1/
+```
+
+Ví dụ:
+
+```text
+Stage1_01_Project_Config.png
+Stage1_02_100_Products_URL.png
+```
+
+---
+
+# 6. Giai đoạn 2 - Coil và Async Image Loading
+
+## 6.1. Coil 3
+
+Project sử dụng Coil 3 để tải ảnh từ remote URL.
+
+Hai dependency chính:
+
+```text
+coil-compose
+coil-network-okhttp
+```
+
+Ảnh được hiển thị bằng:
+
+```kotlin
+AsyncImage(...)
+```
+
+## 6.2. Loading Placeholder
+
+Trong thời gian ảnh đang được tải, ứng dụng hiển thị placeholder.
 
 Mục đích:
 
-- Tránh lặp code.
-- Tách UI khỏi cấu hình tải ảnh.
-- Dễ chuyển Baseline/Optimized.
-- Dễ thay đổi chính sách cache.
-- Dễ thay đổi kích thước request.
-- Thuận tiện cho benchmark.
+- Tránh vùng ảnh bị trống.
+- Cung cấp phản hồi trực quan cho người dùng.
+- Cho biết request ảnh đang được xử lý.
 
-Luồng xử lý:
+Loading placeholder đã được kiểm thử bằng cách:
 
-```text
-ProductListScreen / ProductDetailScreen
-                 ↓
-        createImageRequest()
-                 ↓
-        ImageConfig.currentMode
-                 ↓
-       ┌─────────┴──────────┐
-       ↓                    ↓
-   BASELINE             OPTIMIZED
-       ↓                    ↓
-ImageRequest         Optimized Request
-```
+- Clear app data.
+- Giảm tốc độ mạng emulator.
+- Mở ứng dụng.
+- Quan sát placeholder trước khi ảnh thật xuất hiện.
 
----
-
-# 10. Baseline Mode
-
-Baseline sử dụng request cơ bản:
-
-```kotlin
-fun createBaselineRequest(
-    context: Context,
-    imageUrl: String
-): ImageRequest {
-    return ImageRequest.Builder(context)
-        .data(imageUrl)
-        .build()
-}
-```
-
-Baseline:
-
-- Sử dụng URL ảnh gốc.
-- Không chủ động chỉ định kích thước decode bằng `.size()`.
-- Không thêm chính sách tối ưu kích thước riêng.
-- Giữ hành vi mặc định của Coil đối với các chính sách không được cấu hình rõ.
-
-Baseline đại diện cho phiên bản **trước khi áp dụng các tối ưu chủ động của project**.
-
-> Lưu ý: Baseline không được mô tả là "không có cache", vì request hiện tại không tắt cache mặc định của Coil.
-
----
-
-# 11. Optimized Mode
-
-Optimized Request:
-
-```kotlin
-fun createOptimizedRequest(
-    context: Context,
-    imageUrl: String,
-    width: Int,
-    height: Int
-): ImageRequest {
-    return ImageRequest.Builder(context)
-        .data(imageUrl)
-        .size(width, height)
-        .memoryCachePolicy(CachePolicy.ENABLED)
-        .diskCachePolicy(CachePolicy.ENABLED)
-        .build()
-}
-```
-
-Optimized Mode áp dụng:
-
-- Resize request.
-- Memory Cache được cấu hình `ENABLED`.
-- Disk Cache được cấu hình `ENABLED`.
-- Thumbnail strategy cho Product List.
-- Kích thước lớn hơn cho Detail.
-
----
-
-# 12. Resize Strategy
-
-Một trong các vấn đề cần tránh khi hiển thị ảnh là decode ảnh lớn hơn nhiều so với kích thước thực tế cần hiển thị.
-
-Nguồn ảnh hiện tại:
+Kết quả:
 
 ```text
-800 × 600
+PASS
 ```
 
-Trong khi Product List chỉ hiển thị thumbnail nhỏ.
+## 6.3. Error Placeholder
 
-Do đó Optimized Mode yêu cầu kích thước phù hợp hơn.
+Ứng dụng có error placeholder khi Coil không thể tải ảnh.
+
+Kiểm thử được thực hiện bằng URL không hợp lệ.
+
+Kết quả:
+
+```text
+Product có URL lỗi → Error Placeholder
+Product khác → tải ảnh bình thường
+```
+
+Kết quả:
+
+```text
+PASS
+```
+
+## 6.4. Async Loading
+
+Coil xử lý việc tải ảnh bất đồng bộ.
+
+Trong quá trình ảnh đang tải, giao diện vẫn có thể tương tác và cuộn mà không cần thực hiện network request trực tiếp trên Main Thread.
+
+## 6.5. Minh chứng
+
+Ảnh Stage 2:
+
+```text
+pic/stage 2/
+```
+
+Bao gồm các minh chứng như:
+
+```text
+Stage2_03_Coil_Dependencies.png
+Stage2_04_AsyncImage_Code.png
+Stage2_05_Detail_AsyncImage_Code.png
+Stage2_Error_Placeholder.png
+Stage2_Loading_Placeholder.png
+```
 
 ---
 
-## 12.1. Product List
+# 7. Giai đoạn 3 - Baseline và Optimized
 
-UI:
+Giai đoạn 3 xây dựng hai chế độ tải ảnh để phục vụ thực nghiệm.
 
-```kotlin
-Modifier.size(100.dp)
+```text
+BASELINE
+vs
+OPTIMIZED
 ```
-
-Optimized request:
-
-```kotlin
-createImageRequest(
-    context = LocalContext.current,
-    imageUrl = product.imageUrl,
-    width = 200,
-    height = 200
-)
-```
-
-Khi chạy `OPTIMIZED`, request sử dụng:
-
-```kotlin
-.size(200, 200)
-```
-
-Mục tiêu là tránh decode ảnh nguồn lớn không cần thiết cho thumbnail trong danh sách.
 
 ---
 
-## 12.2. Product Detail
+## 7.1. Baseline
 
-Detail cần hình ảnh lớn hơn.
+Baseline đại diện cho cách tải ảnh cơ bản.
 
 Request:
 
 ```kotlin
-createImageRequest(
-    context = LocalContext.current,
-    imageUrl = product.imageUrl,
-    width = 800,
-    height = 600
-)
+ImageRequest.Builder(context)
+    .data(imageUrl)
+    .build()
 ```
 
-Do đó:
+Baseline không bổ sung các cấu hình tối ưu chủ động được sử dụng trong chế độ Optimized.
+
+---
+
+## 7.2. Optimized
+
+Optimized bổ sung các cấu hình liên quan đến:
+
+- Resize ảnh.
+- Memory Cache.
+- Disk Cache.
+
+Ví dụ:
+
+```kotlin
+ImageRequest.Builder(context)
+    .data(imageUrl)
+    .size(width, height)
+    .memoryCachePolicy(CachePolicy.ENABLED)
+    .diskCachePolicy(CachePolicy.ENABLED)
+    .build()
+```
+
+Mục tiêu là kiểm tra ảnh theo kích thước phù hợp hơn với vùng hiển thị và chủ động cấu hình cache.
+
+---
+
+## 7.3. ImageRequestFactory
+
+`ImageRequestFactory.kt` chịu trách nhiệm chọn request phù hợp.
 
 ```text
-Product List → 200 × 200
-Product Detail → 800 × 600
+currentMode
+    │
+    ├── BASELINE
+    │       ↓
+    │   Baseline Request
+    │
+    └── OPTIMIZED
+            ↓
+        Optimized Request
 ```
+
+Điều này giúp giữ nguyên giao diện và dữ liệu trong khi thay đổi chiến lược tải ảnh.
 
 ---
 
-# 13. Memory Cache
+## 7.4. Chuyển đổi chế độ
 
-Optimized Mode cấu hình:
+Chế độ được cấu hình tại:
 
-```kotlin
-.memoryCachePolicy(CachePolicy.ENABLED)
+```text
+ImageConfig.kt
 ```
 
-Mục tiêu:
-
-- Cho phép sử dụng ảnh đã được xử lý trong bộ nhớ.
-- Hạn chế công việc tải/decode lặp lại trong các tình huống phù hợp.
-- Chuẩn bị cho kiểm thử Cache Hit.
-
----
-
-# 14. Disk Cache
-
-Optimized Mode cấu hình:
+Baseline:
 
 ```kotlin
-.diskCachePolicy(CachePolicy.ENABLED)
+var currentMode = ImageMode.BASELINE
 ```
 
-Mục tiêu:
-
-- Cho phép sử dụng disk cache của Coil.
-- Giảm nhu cầu tải lại dữ liệu ảnh trong các tình huống phù hợp.
-- Hỗ trợ kiểm thử reload/cache trong giai đoạn tiếp theo.
-
----
-
-# 15. Chuyển đổi Baseline và Optimized
-
-`createImageRequest()` kiểm tra mode hiện tại:
+Optimized:
 
 ```kotlin
-return when (ImageConfig.currentMode) {
-    ImageMode.BASELINE -> {
-        createBaselineRequest(
-            context = context,
-            imageUrl = imageUrl
-        )
-    }
-
-    ImageMode.OPTIMIZED -> {
-        createOptimizedRequest(
-            context = context,
-            imageUrl = imageUrl,
-            width = width,
-            height = height
-        )
-    }
-}
+var currentMode = ImageMode.OPTIMIZED
 ```
 
-Nhờ đó UI không cần biết chi tiết cấu hình bên trong.
-
----
-
-# 16. Hiển thị Mode trên giao diện
-
-Để tránh nhầm lẫn trong quá trình benchmark, Product List hiển thị mode hiện tại:
-
-```kotlin
-Text(
-    text = "Image Mode: ${ImageConfig.currentMode}"
-)
-```
-
-Khi chạy Baseline:
+Trên giao diện, mode hiện tại được hiển thị:
 
 ```text
 Image Mode: BASELINE
 ```
 
-Khi chạy Optimized:
+hoặc:
 
 ```text
 Image Mode: OPTIMIZED
 ```
 
-Điều này giúp screenshot và dữ liệu benchmark có thể được phân biệt rõ ràng.
+Điều này giúp xác định rõ mode trong ảnh minh chứng và quá trình benchmark.
 
 ---
 
-# 17. So sánh thiết kế Baseline và Optimized
+## 7.5. Minh chứng
 
-| Thành phần | Baseline | Optimized |
-|---|---|---|
-| Remote Image | Có | Có |
-| Coil | Có | Có |
-| AsyncImage | Có | Có |
-| Placeholder | Có | Có |
-| Error Image | Có | Có |
-| LazyColumn | Có | Có |
-| Explicit Resize | Không | Có |
-| List Request Size | Không chỉ định | 200 × 200 |
-| Detail Request Size | Không chỉ định | 800 × 600 |
-| Explicit Memory Cache Policy | Không | ENABLED |
-| Explicit Disk Cache Policy | Không | ENABLED |
-| Mode Indicator | BASELINE | OPTIMIZED |
-
----
-
-# 18. Quy trình reset phục vụ benchmark
-
-Khi cần thực hiện một lượt kiểm thử First Load với trạng thái ứng dụng sạch, có thể sử dụng:
-
-```powershell
-adb shell pm clear com.example.imageoptimizationapp
-```
-
-Trên môi trường phát triển hiện tại:
-
-```powershell
-& "C:\Users\THANH TIEN\AppData\Local\Android\Sdk\platform-tools\adb.exe" shell pm clear com.example.imageoptimizationapp
-```
-
-Kết quả mong đợi:
+Ảnh Stage 3:
 
 ```text
-Success
+pic/stage 3/
 ```
 
-Không sử dụng thao tác clear giữa hai lần tải khi đang kiểm tra Cache Hit, vì cache cần được giữ lại để đánh giá hành vi tải lại.
-
----
-
-# 19. Trạng thái sau 3 giai đoạn
-
-## Giai đoạn 1
-
-```text
-Android Kotlin Project       DONE
-Jetpack Compose              DONE
-Product Model                DONE
-100 Products                 DONE
-100 Image URLs               DONE
-LazyColumn                   DONE
-Product List                 DONE
-Product Detail               DONE
-List → Detail                DONE
-```
-
-## Giai đoạn 2
-
-```text
-Coil 3                       DONE
-Network Image Loading        DONE
-AsyncImage                   DONE
-ImageRequest                 DONE
-Loading Placeholder          DONE
-Error Placeholder            DONE
-Slow Network Test            DONE
-Invalid URL Test             DONE
-Fast Scroll Test             DONE
-```
-
-## Giai đoạn 3
-
-```text
-ImageMode                    DONE
-ImageConfig                  DONE
-ImageRequestFactory          DONE
-Baseline Mode                DONE
-Optimized Mode               DONE
-Memory Cache Configuration   DONE
-Disk Cache Configuration     DONE
-List Resize                  DONE
-Detail Resize                DONE
-Thumbnail Strategy           DONE
-Mode Indicator               DONE
-```
-
----
-
-# 20. Minh chứng đã thu thập
-
-## Giai đoạn 1
-
-```text
-Stage1_01_Project_Config.png
-Stage1_02_100_Products_URL.png
-Stage1_03_Product_List.png
-Stage1_04_Product_List_Scroll.png
-Stage1_05_Product_Detail.png
-```
-
-## Giai đoạn 2
-
-```text
-Stage2_01_Loading_Placeholder.png
-Stage2_02_Error_Placeholder.png
-Stage2_03_Coil_Dependencies.png
-Stage2_04_AsyncImage_Code.png
-Stage2_05_Detail_AsyncImage_Code.png
-```
-
-## Giai đoạn 3
+Bao gồm:
 
 ```text
 Stage3_01_Baseline.png
@@ -853,85 +466,545 @@ Stage3_04_Request_Comparison.png
 
 ---
 
-# 21. Giai đoạn tiếp theo – Performance Testing
+# 8. UI và State Fix
 
-Giai đoạn 4 sẽ thực hiện các test case:
+Trước khi thực hiện Performance Testing, project được sửa thêm hai vấn đề giao diện.
 
-| Test Case | Nội dung |
-|---|---|
-| TC01 | First Load |
-| TC02 | Cache Hit |
-| TC03 | Fast Scroll |
-| TC04 | High-resolution Image |
-| TC05 | Offline |
-| TC06 | Bad URL / Slow Server |
-| TC07 | Scale Test: 100 → 500 → 1000 images |
-| TC08 | Before vs After Optimization |
+## 8.1. Edge-to-Edge System Bars
 
-Các chỉ số dự kiến thu thập:
+Nội dung trước đây có khả năng hiển thị sát hoặc đè lên vùng System Bars.
 
-- Image loading time.
-- Reload behavior.
-- Memory usage.
-- CPU usage.
-- Frame rendering / jank.
-- Scrolling smoothness.
-- Cache behavior.
-- Baseline vs Optimized comparison.
+Các màn hình được bổ sung xử lý safe drawing area để nội dung nằm đúng trong vùng hiển thị.
 
-Công cụ chính:
+Kết quả:
 
 ```text
-Android Studio Profiler
+Status Bar
+------------------------
+Image Mode
+Product List
+...
+------------------------
+Navigation Bar
 ```
 
-Môi trường benchmark sẽ được giữ nhất quán:
+Nội dung không còn đè lên System Bars.
+
+## 8.2. Preserve Scroll Position
+
+Ban đầu khi thực hiện:
 
 ```text
-Device: Pixel 5 Emulator
-API: 30
-Same image source
-Same network conditions
-Same application version
-Same test procedure
+Product 70
+→ Detail
+→ Back
+```
+
+LazyColumn có thể quay trở lại đầu danh sách.
+
+Project sử dụng:
+
+```kotlin
+rememberLazyListState()
+```
+
+và truyền `LazyListState` vào `ProductListScreen`.
+
+Sau khi sửa:
+
+```text
+Product 70
+→ Detail
+→ Back
+→ trở lại khu vực Product 70
+```
+
+Vị trí cuộn được bảo toàn.
+
+---
+
+# 9. Giai đoạn 4 - Performance Testing
+
+Thiết bị và môi trường kiểm thử chính:
+
+```text
+Device       : Pixel 5 Emulator
+Android      : Android 11
+API          : 30
+Products     : 100 mặc định
+Network      : Full, trừ các test liên quan Offline/Slow Network
+Profiler     : Android Studio Profiler
+Image Source : Remote URL
+```
+
+Các test được thực hiện trên cùng thiết bị và môi trường nhằm giảm sai lệch giữa Baseline và Optimized.
+
+---
+
+# 10. TC01 - First Load
+
+## 10.1. Mục tiêu
+
+Kiểm tra hành vi của ứng dụng trong lần tải ảnh đầu tiên khi app bắt đầu từ trạng thái sạch.
+
+Quy trình:
+
+```text
+Set Image Mode
+→ Build
+→ Clear App Data
+→ Run
+→ View Live Telemetry
+→ Không scroll/click
+→ Record khoảng 30 giây
+→ Stop Recording
+```
+
+## 10.2. Baseline
+
+Điều kiện:
+
+```text
+Mode        : BASELINE
+Products    : 100
+Network     : Full
+Interaction : Không scroll/click
+Duration    : khoảng 30 giây
+```
+
+Kết quả cuối lượt:
+
+| Metric | Baseline |
+|---|---:|
+| Total Memory | 110.9 MB |
+| Java | 11.4 MB |
+| Native | 44.8 MB |
+| Stack | 2.5 MB |
+| Code | 39.4 MB |
+| Others | 12.8 MB |
+| Image Loading | PASS |
+
+## 10.3. Optimized
+
+Điều kiện kiểm thử được giữ tương đương với Baseline.
+
+Kết quả cuối lượt:
+
+| Metric | Optimized |
+|---|---:|
+| Total Memory | 152.8 MB |
+| Java | 16.3 MB |
+| Native | 79.3 MB |
+| Stack | 2.3 MB |
+| Code | 41.5 MB |
+| Others | 13.4 MB |
+| Image Loading | PASS |
+
+## 10.4. So sánh TC01
+
+| Metric | Baseline | Optimized |
+|---|---:|---:|
+| Total Memory | 110.9 MB | 152.8 MB |
+| Java | 11.4 MB | 16.3 MB |
+| Native | 44.8 MB | 79.3 MB |
+| Stack | 2.5 MB | 2.3 MB |
+| Code | 39.4 MB | 41.5 MB |
+| Others | 12.8 MB | 13.4 MB |
+| Result | PASS | PASS |
+
+Trong lượt đo TC01 này, memory cuối lượt của Optimized cao hơn Baseline.
+
+Kết quả này được giữ nguyên theo dữ liệu thực nghiệm và chưa được sử dụng riêng lẻ để kết luận Optimized tốt hơn hoặc kém hơn Baseline.
+
+Việc đánh giá tổng thể cần kết hợp thêm Cache Hit, Fast Scroll, High-resolution Image, scalability và các test tiếp theo.
+
+## 10.5. Minh chứng
+
+```text
+pic/TC/TC01_First_Load/
+```
+
+Bao gồm:
+
+```text
+TC01_Baseline_Profiler.png
+TC01_Optimized_Profiler.png
 ```
 
 ---
 
-# 22. Roadmap
+# 11. TC02 - Cache Hit
+
+## 11.1. Mục tiêu
+
+Kiểm tra hành vi tải lại ảnh sau khi ảnh đã được tải trước đó.
+
+Quy trình:
 
 ```text
-Stage 1
-Basic Android Application
-Product List + Detail + 100 URLs
-            │
-            ▼
-Stage 2
-Coil + AsyncImage
-Loading/Error Placeholder
-            │
-            ▼
-Stage 3
-Baseline vs Optimized
-Cache + Resize + Thumbnail
-            │
-            ▼
-Stage 4
-TC01 → TC08
-Profiler + Performance Data
-            │
-            ▼
-Stage 5
-Report + Charts + Evidence
-APK + Demo Video + README
+Clear App Data
+→ Run
+→ Đợi ảnh tải hoàn tất
+→ Không clear data/cache nữa
+→ Start Profiler
+→ Product 1
+→ Detail
+→ Back
+→ Product 2
+→ Detail
+→ Back
+→ Stop Recording
+```
+
+Việc không clear dữ liệu giữa initial load và reload là cần thiết để giữ trạng thái cache phục vụ kiểm thử.
+
+---
+
+## 11.2. Baseline
+
+Kết quả cuối lượt:
+
+| Metric | Baseline |
+|---|---:|
+| Total Memory | 114.3 MB |
+| Java | 12.6 MB |
+| Native | 46.3 MB |
+| Stack | 2.3 MB |
+| Code | 39.5 MB |
+| Others | 13.6 MB |
+| Error | No |
+| Result | PASS |
+
+---
+
+## 11.3. Optimized
+
+Kết quả cuối lượt:
+
+| Metric | Optimized |
+|---|---:|
+| Total Memory | 131.6 MB |
+| Java | 17.3 MB |
+| Native | 56.4 MB |
+| Stack | 2.2 MB |
+| Code | 41.4 MB |
+| Others | 14.4 MB |
+| Error | No |
+| Result | PASS |
+
+---
+
+## 11.4. So sánh TC02
+
+| Metric | Baseline | Optimized |
+|---|---:|---:|
+| Total Memory | 114.3 MB | 131.6 MB |
+| Java | 12.6 MB | 17.3 MB |
+| Native | 46.3 MB | 56.4 MB |
+| Stack | 2.3 MB | 2.2 MB |
+| Code | 39.5 MB | 41.4 MB |
+| Others | 13.6 MB | 14.4 MB |
+| Error | No | No |
+| Result | PASS | PASS |
+
+TC02 xác nhận ứng dụng có thể tải và hiển thị lại ảnh ổn định trong quá trình List → Detail → Back.
+
+Memory snapshot của Optimized trong lượt đo này vẫn cao hơn Baseline.
+
+Android Studio Live Telemetry được sử dụng để theo dõi CPU và Memory. Các biểu đồ CPU được giữ làm minh chứng trực quan; không tự suy đoán giá trị CPU peak khi Profiler không cung cấp một số peak chính xác trong screenshot.
+
+## 11.5. Minh chứng
+
+```text
+pic/TC/TC02_Cache_Hit/
+```
+
+Bao gồm:
+
+```text
+TC02_Baseline_CacheHit_Profiler.png
+TC02_Optimized_CacheHit_Profiler.png
 ```
 
 ---
 
-# 23. Current Status
+# 12. Danh sách Test Case
 
-**Stage 1:** Completed  
-**Stage 2:** Completed  
-**Stage 3:** Completed  
-**Stage 4:** Not started  
-**Stage 5:** Not started
+Tiến độ Giai đoạn 4:
+
+- [x] **TC01 - First Load**
+- [x] **TC02 - Cache Hit**
+- [ ] **TC03 - Fast Scroll**
+- [ ] **TC04 - High-resolution Image**
+- [ ] **TC05 - Offline**
+- [ ] **TC06 - Bad URL / Slow Server**
+- [ ] **TC07 - 100 → 500 → 1000 Products**
+- [ ] **TC08 - Baseline vs Optimized**
+
+---
+
+# 13. TC03 - Fast Scroll
+
+**Status:** Pending
+
+Mục tiêu:
+
+- Cuộn nhanh qua danh sách sản phẩm.
+- Kiểm tra UI responsiveness.
+- Kiểm tra placeholder.
+- Kiểm tra ảnh có bị hiển thị sai item hay không.
+- Theo dõi CPU và Memory.
+- Kiểm tra crash hoặc freeze.
+
+---
+
+# 14. TC04 - High-resolution Image
+
+**Status:** Pending
+
+Mục tiêu:
+
+- Kiểm tra ảnh độ phân giải lớn.
+- So sánh Baseline và Optimized.
+- Đánh giá resize/downsampling.
+- Theo dõi ảnh được decode và memory usage.
+
+---
+
+# 15. TC05 - Offline
+
+**Status:** Pending
+
+Mục tiêu:
+
+- Tải ảnh trước khi ngắt mạng.
+- Chuyển emulator sang Offline.
+- Kiểm tra khả năng hiển thị ảnh đã có dữ liệu/cache.
+- Kiểm tra error handling với ảnh chưa tải.
+
+---
+
+# 16. TC06 - Bad URL / Slow Server
+
+**Status:** Pending
+
+Mục tiêu:
+
+- Kiểm tra URL không hợp lệ.
+- Kiểm tra server phản hồi chậm.
+- Quan sát loading placeholder.
+- Quan sát error placeholder.
+- Đảm bảo ứng dụng không crash.
+
+Trong quá trình phát triển, Picsum từng trả về lỗi:
+
+```text
+Error 503 Maximum threads for service reached
+```
+
+Ảnh minh chứng lỗi server được lưu tại:
+
+```text
+pic/Server_503_Picsum.png
+```
+
+Đây là lỗi từ dịch vụ ảnh bên ngoài và không phải lỗi crash của ứng dụng.
+
+---
+
+# 17. TC07 - Scalability
+
+**Status:** Pending
+
+Kiểm thử ứng dụng với:
+
+```text
+100 Products
+500 Products
+1000 Products
+```
+
+Mục tiêu:
+
+- Theo dõi Memory.
+- Theo dõi CPU.
+- Kiểm tra khả năng cuộn.
+- Kiểm tra crash/OOM.
+- Quan sát khả năng Lazy Loading khi dataset tăng.
+
+---
+
+# 18. TC08 - Baseline vs Optimized
+
+**Status:** Pending
+
+TC08 sẽ tổng hợp kết quả của các test trước để so sánh:
+
+```text
+BASELINE
+vs
+OPTIMIZED
+```
+
+Các tiêu chí dự kiến:
+
+- First Load
+- Cache Hit
+- Memory Usage
+- Fast Scroll
+- High-resolution Image
+- Offline behavior
+- Error handling
+- Scalability
+- UI responsiveness
+
+Không kết luận mode nào tốt hơn cho đến khi hoàn thành đầy đủ các phép thử.
+
+---
+
+# 19. Android Studio Profiler
+
+Project sử dụng:
+
+```text
+View Live Telemetry
+```
+
+để theo dõi runtime.
+
+Các dữ liệu chính:
+
+- CPU activity
+- Total Memory
+- Java Memory
+- Native Memory
+- Stack
+- Code
+- Others
+
+Quy trình benchmark cố gắng giữ các điều kiện giống nhau giữa Baseline và Optimized.
+
+Ví dụ:
+
+```text
+Same Device
+Same API
+Same Product Dataset
+Same Network Condition
+Same Interaction Sequence
+Same Test Duration
+```
+
+---
+
+# 20. Thư mục minh chứng
+
+Ảnh minh chứng được tổ chức trong:
+
+```text
+pic/
+```
+
+Cấu trúc hiện tại:
+
+```text
+pic/
+│
+├── stage 1/
+│
+├── stage 2/
+│
+├── stage 3/
+│
+├── TC/
+│   ├── TC01_First_Load/
+│   │   ├── TC01_Baseline_Profiler.png
+│   │   └── TC01_Optimized_Profiler.png
+│   │
+│   └── TC02_Cache_Hit/
+│       ├── TC02_Baseline_CacheHit_Profiler.png
+│       └── TC02_Optimized_CacheHit_Profiler.png
+│
+└── Server_503_Picsum.png
+```
+
+Các test tiếp theo sẽ được bổ sung:
+
+```text
+pic/TC/
+├── TC03_Fast_Scroll/
+├── TC04_High_Resolution/
+├── TC05_Offline/
+├── TC06_Error_Slow_Server/
+├── TC07_Scalability/
+└── TC08_Baseline_vs_Optimized/
+```
+
+---
+
+# 21. Trạng thái hiện tại
+
+```text
+Stage 1 - Basic Application                 COMPLETE
+Stage 2 - Coil + Async Image Loading        COMPLETE
+Stage 3 - Baseline + Optimized              COMPLETE
+UI Fix - System Bars + Scroll State         COMPLETE
+Stage 4 - Performance Testing               IN PROGRESS
+```
+
+Performance Testing:
+
+```text
+TC01 First Load                COMPLETE
+TC02 Cache Hit                 COMPLETE
+TC03 Fast Scroll               PENDING
+TC04 High-resolution           PENDING
+TC05 Offline                   PENDING
+TC06 Bad URL / Slow Server     PENDING
+TC07 100 / 500 / 1000          PENDING
+TC08 Baseline vs Optimized     PENDING
+```
+
+---
+
+# 22. Các bước tiếp theo
+
+Các công việc tiếp theo:
+
+1. Thực hiện TC03 - Fast Scroll.
+2. Thực hiện TC04 - High-resolution Image.
+3. Thực hiện TC05 - Offline.
+4. Thực hiện TC06 - Bad URL / Slow Server.
+5. Thực hiện TC07 với 100, 500 và 1000 sản phẩm.
+6. Tổng hợp TC08 Baseline vs Optimized.
+7. Tổng hợp số liệu thành bảng và biểu đồ.
+8. Hoàn thiện báo cáo thực nghiệm.
+9. Build APK.
+10. Quay video demo.
+11. Hoàn thiện README và tài liệu bàn giao.
+
+---
+
+# 23. Ghi chú
+
+Kết quả benchmark trong project là kết quả thực nghiệm trên:
+
+```text
+Pixel 5 Emulator
+Android 11
+API 30
+```
+
+Các giá trị CPU và Memory có thể thay đổi giữa các lượt chạy do:
+
+- Android Runtime.
+- Garbage Collection.
+- Network.
+- Image server.
+- Emulator.
+- Background processes.
+- Trạng thái cache.
+
+Vì vậy, kết quả được đánh giá dựa trên cùng môi trường kiểm thử và cùng quy trình giữa Baseline và Optimized.
+
+Các số liệu thực nghiệm được giữ nguyên, không điều chỉnh để buộc Optimized phải có kết quả tốt hơn Baseline.
