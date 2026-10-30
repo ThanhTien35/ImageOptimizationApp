@@ -6,5 +6,5 @@ enum class ImageMode {
 }
 
 object ImageConfig {
-    var currentMode = ImageMode.BASELINE
+    var currentMode = ImageMode.OPTIMIZED
 }
