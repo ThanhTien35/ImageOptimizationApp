@@ -1,16 +1,20 @@
 # ImageOptimizationApp – Development Progress & Technical Notes
 
-Tài liệu này dùng để theo dõi **tiến độ phát triển, cơ sở kỹ thuật, cách triển khai và kết quả kiểm thử** của project `ImageOptimizationApp`.
+Tài liệu này ghi lại toàn bộ **quá trình nghiên cứu, phát triển, tối ưu và kiểm thử** của project `ImageOptimizationApp`.
 
-Mục đích của file này là giúp các thành viên trong nhóm có thể nhanh chóng biết:
+Khác với `README.md` tập trung vào hướng dẫn cài đặt và sử dụng, `PROGRESS.md` trình bày project theo từng giai đoạn phát triển, bao gồm:
 
-- Project đang ở giai đoạn nào.
-- Những chức năng nào đã hoàn thành.
-- Tại sao các kỹ thuật tối ưu được sử dụng.
-- BASELINE và OPTIMIZED khác nhau như thế nào.
-- Các testcase đã được thực hiện ra sao.
-- Evidence được lưu ở đâu.
-- Những công việc nào còn lại trước khi nộp bài.
+- Cơ sở kỹ thuật được nghiên cứu.
+- Mục tiêu của từng Stage.
+- Các chức năng đã triển khai.
+- Các kỹ thuật tối ưu được áp dụng.
+- Phương pháp kiểm thử.
+- Kết quả thực nghiệm.
+- Evidence của từng giai đoạn.
+- Trạng thái các deliverable cuối cùng.
+
+> **Project Status:** COMPLETED  
+> **Remaining:** Video Demo – YouTube link will be updated later
 
 ---
 
@@ -22,8 +26,9 @@ Mục đích của file này là giúp các thành viên trong nhóm có thể n
 - **Platform:** Android
 - **Language:** Kotlin
 - **UI Framework:** Jetpack Compose
-- **Image Loading:** Coil 3
+- **Image Loading Library:** Coil 3
 - **Minimum SDK:** API 24
+- **Compile / Target SDK:** API 37
 - **Main Test Device:** Pixel 5 Emulator
 - **Test Android Version:** Android 11 – API 30
 - **Image Source:** Picsum Photos
@@ -33,71 +38,184 @@ Mục đích của file này là giúp các thành viên trong nhóm có thể n
 
 ## Main Objective
 
-Project nghiên cứu và thực nghiệm các kỹ thuật:
+Project tập trung nghiên cứu và thực nghiệm các kỹ thuật:
 
-- Async Image Loading
-- Lazy Loading
-- Memory Cache
-- Disk Cache
-- Resize / Downsampling
-- Thumbnail Strategy
-- Placeholder / Error Handling
+- Async Image Loading.
+- Lazy Loading.
+- Memory Cache.
+- Disk Cache.
+- Resize / Downsampling.
+- Placeholder.
+- Error Handling.
 
-Mục tiêu không chỉ là tải được ảnh từ Internet mà còn đánh giá ảnh hưởng của các kỹ thuật trên đến:
+Mục tiêu không chỉ là tải được hình ảnh từ Internet mà còn đánh giá ảnh hưởng của các kỹ thuật trên đến:
 
-- Memory usage
-- Image loading behavior
-- Cache behavior
-- High-resolution image processing
-- Network/error handling
-- Application stability
-- Dataset scalability
+- Memory usage.
+- Image loading behavior.
+- Cache behavior.
+- High-resolution image processing.
+- Network / error handling.
+- Application stability.
+- Dataset scalability.
 
----
-
-# 2. Why Image Optimization Is Necessary
-
-Ảnh tải từ Internet thường có kích thước và độ phân giải lớn hơn kích thước thực tế cần hiển thị trên màn hình.
-
-Nếu ứng dụng tải và decode ảnh mà không có chiến lược phù hợp, có thể xảy ra:
-
-- Tăng Memory usage.
-- Decode bitmap lớn không cần thiết.
-- Tăng network requests.
-- Ảnh phải tải lại nhiều lần.
-- Scroll danh sách kém ổn định.
-- Tăng nguy cơ OutOfMemoryError khi dataset lớn.
-- Trải nghiệm kém khi mạng chậm hoặc mất kết nối.
-
-Vì vậy project xây dựng hai chế độ:
+## Development Process
 
 ```text
-BASELINE
-    ↓
-Before Optimization
-
-vs
-
-OPTIMIZED
-    ↓
-After Optimization
+Stage 1
+Basic Application
+      ↓
+Stage 2
+Image Loading
+      ↓
+Stage 3
+Image Optimization
+      ↓
+Stage 4
+Performance Testing
+      ↓
+Stage 5
+Final Analysis & Deliverables
 ```
 
-BASELINE đóng vai trò mốc so sánh.
-
-OPTIMIZED áp dụng cache, resize/downsampling và các chiến lược xử lý ảnh phù hợp hơn.
+| Stage | Nội dung | Status |
+|---|---|---|
+| Stage 1 | Basic Application & Lazy Loading | COMPLETED |
+| Stage 2 | Async Image Loading & Error Handling | COMPLETED |
+| Stage 3 | Image Optimization – BASELINE vs OPTIMIZED | COMPLETED |
+| Stage 4 | Performance Testing – TC01 đến TC07 | COMPLETED |
+| Stage 5 | Final Analysis, TC08 & Deliverables | COMPLETED |
+| Video Demo | YouTube Demo | PENDING LINK |
 
 ---
 
-# 3. Technical Background
+# 2. Stage 1 – Basic Application & Lazy Loading
 
-## 3.1 Async Image Loading
+## Status
+
+```text
+COMPLETED
+```
+
+## 2.1 Objective
+
+Stage 1 xây dựng phiên bản cơ bản của ứng dụng trước khi bổ sung các kỹ thuật xử lý và tối ưu hình ảnh.
+
+Ứng dụng cần có:
+
+- Product data.
+- Product List.
+- Product Detail.
+- Navigation.
+- Khả năng hiển thị dataset lớn bằng danh sách phù hợp.
+
+Stage này đóng vai trò làm nền tảng:
+
+```text
+Basic Application
+       ↓
+Image Loading
+       ↓
+Optimization
+       ↓
+Performance Testing
+```
+
+---
+
+## 2.2 Technical Background – Lazy Loading
+
+Danh sách sản phẩm được xây dựng bằng:
+
+```kotlin
+LazyColumn
+```
+
+Trong Jetpack Compose, `LazyColumn` phù hợp với danh sách dài vì các item được compose theo nhu cầu hiển thị thay vì hiển thị toàn bộ dataset cùng một lúc.
+
+Điều này đặc biệt quan trọng khi dataset tăng từ:
+
+```text
+100
+ ↓
+500
+ ↓
+1000 products
+```
+
+Việc sử dụng Lazy Loading giúp ứng dụng có thể xử lý danh sách lớn hợp lý hơn và tạo nền tảng cho TC07 – Dataset Scaling.
+
+---
+
+## 2.3 Implemented
+
+- Khởi tạo Android project bằng Kotlin.
+- Sử dụng Jetpack Compose.
+- Xây dựng `Product` model.
+- Tạo dataset 100 products.
+- Tạo URL hình ảnh cho từng product.
+- Xây dựng Product List.
+- Sử dụng `LazyColumn`.
+- Xây dựng Product Detail.
+- Điều hướng từ Product List sang Product Detail.
+- Back navigation.
+- Duy trì vị trí danh sách khi quay lại từ Detail.
+
+## Main Files
+
+```text
+MainActivity.kt
+Product.kt
+ProductListScreen.kt
+ProductDetailScreen.kt
+```
+
+---
+
+## 2.4 Evidence
+
+```text
+evidence/stage 1/
+```
+
+Bao gồm các evidence về:
+
+- Project configuration.
+- Dataset 100 products.
+- Product List.
+- Product Detail.
+- Navigation.
+
+---
+
+## 2.5 Result
+
+Stage 1 hoàn thành phiên bản ứng dụng cơ bản với Product List và Product Detail hoạt động ổn định.
+
+`LazyColumn` được sử dụng ngay từ giai đoạn đầu để ứng dụng có thể tiếp tục được kiểm thử với dataset lớn hơn ở các Stage sau.
+
+---
+
+# 3. Stage 2 – Async Image Loading & Error Handling
+
+## Status
+
+```text
+COMPLETED
+```
+
+## 3.1 Objective
+
+Stage 2 tập trung tích hợp Coil để tải hình ảnh từ Internet và xây dựng các trạng thái cần thiết trong quá trình image request.
+
+---
+
+## 3.2 Technical Background – Async Image Loading
 
 Network request không nên thực hiện như một tác vụ nặng trực tiếp trên Main Thread.
 
-Nếu Main Thread bị chiếm dụng quá lâu, UI có thể phản hồi chậm.
+Nếu Main Thread bị chiếm dụng quá lâu, giao diện có thể phản hồi chậm.
 
-Project sử dụng Coil để thực hiện quá trình tải ảnh bất đồng bộ.
+Project sử dụng Coil để thực hiện quá trình tải hình ảnh bất đồng bộ.
 
 Luồng cơ bản:
 
@@ -113,135 +231,19 @@ Decode Image
 Display Image
 ```
 
-Trong thời gian ảnh đang tải, người dùng vẫn có thể:
-
-- Scroll.
-- Chọn sản phẩm.
-- Chuyển màn hình.
-- Thực hiện thao tác UI.
+Trong thời gian hình ảnh đang tải, người dùng vẫn có thể tương tác với giao diện như scroll hoặc chuyển màn hình.
 
 ---
 
-# 4. Lazy Loading
+## 3.3 Technical Background – Placeholder & Error Handling
 
-Danh sách sản phẩm được xây dựng bằng:
-
-```kotlin
-LazyColumn
-```
-
-`LazyColumn` phù hợp với danh sách dài vì các item được compose theo nhu cầu hiển thị thay vì xử lý toàn bộ danh sách cùng lúc.
-
-Điều này đặc biệt quan trọng trong TC07 khi dataset được tăng từ:
+Trong quá trình tải:
 
 ```text
-100
-↓
-500
-↓
-1000 products
-```
-
----
-
-# 5. Memory Cache
-
-Memory Cache lưu dữ liệu ảnh có thể tái sử dụng trong bộ nhớ.
-
-Luồng đơn giản:
-
-```text
-Request Image
-      ↓
-Check Memory Cache
-   ↙           ↘
-HIT             MISS
- ↓                ↓
-Reuse Image     Continue Loading
-```
-
-Ưu điểm:
-
-- Ảnh có thể hiển thị nhanh khi được sử dụng lại.
-- Giảm việc decode/request lại không cần thiết.
-
-Tuy nhiên, Memory Cache cũng có thể làm Memory snapshot cao hơn tại một số thời điểm vì dữ liệu được giữ lại để phục vụ việc tái sử dụng.
-
-Do đó:
-
-> Memory cao hơn tại một snapshot không tự động đồng nghĩa với hiệu năng tổng thể kém hơn.
-
----
-
-# 6. Disk Cache
-
-Disk Cache cho phép dữ liệu ảnh được lưu trên bộ nhớ thiết bị.
-
-So với Memory Cache:
-
-```text
-Memory Cache
-→ nhanh
-→ dữ liệu nằm trong RAM
-
-Disk Cache
-→ chậm hơn Memory Cache
-→ nhưng có thể duy trì dữ liệu lâu hơn
-```
-
-Disk Cache đặc biệt có ý nghĩa khi:
-
-- Reload ảnh.
-- Mở lại nội dung đã tải.
-- Mạng không ổn định.
-- Thiết bị offline nhưng ảnh cần thiết đã được cache trước đó.
-
-Ảnh chưa từng được cache vẫn cần network để tải.
-
----
-
-# 7. Resize / Downsampling
-
-Một ảnh có thể có độ phân giải lớn hơn nhiều so với vùng hiển thị.
-
-Ví dụ:
-
-```text
-Original Image
-800 × 600
-      ↓
-Displayed as small thumbnail
-```
-
-Việc decode ảnh lớn hơn mức cần thiết có thể gây lãng phí bộ nhớ.
-
-OPTIMIZED sử dụng kích thước request phù hợp hơn với UI:
-
-```text
-Product List
-→ Thumbnail / smaller image
-
-Product Detail
-→ Larger image
-```
-
-Mục tiêu:
-
-- Hạn chế oversized decode.
-- Giảm lượng dữ liệu ảnh cần xử lý.
-- Sử dụng bộ nhớ phù hợp hơn với nhu cầu hiển thị.
-
----
-
-# 8. Placeholder & Error Handling
-
-Trong quá trình request:
-
-```text
-Request
-   ↓
+Image Request
+     ↓
 Loading
-   ↓
+     ↓
 Placeholder
 ```
 
@@ -249,7 +251,7 @@ Nếu thành công:
 
 ```text
 Placeholder
-   ↓
+     ↓
 Real Image
 ```
 
@@ -261,136 +263,29 @@ Request Failure
 Error Placeholder
 ```
 
-Điều này giúp UI vẫn có trạng thái hiển thị rõ ràng khi:
+Placeholder và Error Handling giúp giao diện có trạng thái rõ ràng khi:
 
-- Mạng chậm.
-- URL sai.
+- Network chậm.
+- URL không hợp lệ.
 - Server lỗi.
-- HTTP request thất bại.
+- Request thất bại.
 - Thiết bị offline.
 
 ---
 
-# 9. Main Project Structure
-
-```text
-ImageOptimizationApp/
-│
-├── app/
-│   └── src/main/
-│       ├── java/com/example/imageoptimizationapp/
-│       │   ├── MainActivity.kt
-│       │   ├── Product.kt
-│       │   ├── ProductListScreen.kt
-│       │   ├── ProductDetailScreen.kt
-│       │   ├── ImageConfig.kt
-│       │   └── ImageRequestFactory.kt
-│       │
-│       ├── res/
-│       │   └── drawable/
-│       │       ├── placeholder_image
-│       │       └── error_image
-│       │
-│       └── AndroidManifest.xml
-│
-└── pic/
-    ├── stage 1/
-    ├── stage 2/
-    ├── stage 3/
-    ├── stage 4/
-    └── stage 5/
-```
-
----
-
-# 10. Main Application Flow
-
-```text
-Start Application
-        ↓
-Generate Product List
-        ↓
-ProductListScreen
-        ↓
-LazyColumn
-        ↓
-Create ImageRequest
-        ↓
-Coil Async Loading
-        ↓
-Display Product Image
-        ↓
-Select Product
-        ↓
-ProductDetailScreen
-        ↓
-Load Larger Image
-        ↓
-Back
-        ↓
-ProductListScreen
-```
-
----
-
-# 11. Stage 1 – Basic Application
-
-## Status
-
-```text
-COMPLETED
-```
-
-## Implemented
-
-- Android Kotlin project.
-- Jetpack Compose.
-- Product model.
-- 100 products.
-- 100 URL images.
-- Product List.
-- LazyColumn.
-- Product Detail.
-- Back navigation.
-
-## Why This Stage Was Needed
-
-Stage 1 tạo một phiên bản ứng dụng cơ bản trước khi thêm các kỹ thuật tối ưu.
-
-Điều này giúp tách biệt:
-
-```text
-Basic Application
-        ↓
-Image Loading
-        ↓
-Optimization
-        ↓
-Performance Testing
-```
-
-Nếu xây dựng tất cả cùng lúc, việc xác định nguyên nhân khi có lỗi hoặc khác biệt hiệu năng sẽ khó hơn.
-
----
-
-# 12. Stage 2 – Coil & Async Image Loading
-
-## Status
-
-```text
-COMPLETED
-```
-
-## Implemented
+## 3.4 Implemented
 
 - Coil 3.
-- AsyncImage.
-- ImageRequest.
+- Coil Compose.
 - Network image loading.
+- `AsyncImage`.
+- `ImageRequest`.
+- Async image loading.
 - Loading placeholder.
 - Error placeholder.
-- Async loading.
 - Error handling.
+- Image loading cho Product List.
+- Image loading cho Product Detail.
 
 Dependencies:
 
@@ -399,9 +294,11 @@ implementation(libs.coil.compose)
 implementation(libs.coil.network.okhttp)
 ```
 
-## Testing
+---
 
-Loading placeholder được kiểm tra bằng:
+## 3.5 Testing
+
+Loading state được kiểm tra theo quy trình:
 
 ```text
 Clear App Data
@@ -415,11 +312,9 @@ Observe Placeholder
 Image Loaded
 ```
 
-Error placeholder được kiểm tra bằng URL không hợp lệ.
+Error state được kiểm tra bằng URL không hợp lệ.
 
-## Result
-
-Ứng dụng có thể xử lý các trạng thái:
+Các trạng thái được xác nhận:
 
 ```text
 Loading
@@ -427,11 +322,33 @@ Success
 Failure
 ```
 
-mà không cần thực hiện network image loading trực tiếp trên Main Thread.
+---
+
+## 3.6 Evidence
+
+```text
+evidence/stage 2/
+```
+
+Evidence bao gồm:
+
+- Coil dependencies.
+- AsyncImage implementation.
+- Detail image implementation.
+- Loading placeholder.
+- Error placeholder.
 
 ---
 
-# 13. Stage 3 – BASELINE vs OPTIMIZED
+## 3.7 Result
+
+Stage 2 hoàn thành image-loading pipeline cơ bản.
+
+Ứng dụng có thể tải hình ảnh bất đồng bộ và xử lý Loading / Success / Error mà không làm gián đoạn hoạt động chính của giao diện.
+
+---
+
+# 4. Stage 3 – Image Optimization: BASELINE vs OPTIMIZED
 
 ## Status
 
@@ -439,7 +356,156 @@ mà không cần thực hiện network image loading trực tiếp trên Main Th
 COMPLETED
 ```
 
-Stage 3 tạo hai chế độ trong cùng một project.
+## 4.1 Objective
+
+Stage 3 tập trung nghiên cứu và triển khai các kỹ thuật tối ưu hình ảnh.
+
+Hai configuration được xây dựng:
+
+```text
+BASELINE
+    ↓
+Before Optimization
+
+        vs
+
+OPTIMIZED
+    ↓
+After Optimization
+```
+
+BASELINE đóng vai trò làm mốc so sánh.
+
+OPTIMIZED áp dụng các chiến lược xử lý ảnh phù hợp hơn.
+
+---
+
+## 4.2 Technical Background – Memory Cache
+
+Memory Cache cho phép dữ liệu hình ảnh có thể được tái sử dụng trực tiếp từ bộ nhớ.
+
+```text
+Request Image
+      ↓
+Check Memory Cache
+    ↙          ↘
+  HIT          MISS
+   ↓             ↓
+Reuse Image   Continue Loading
+```
+
+Ưu điểm:
+
+- Hình ảnh có thể được tái sử dụng nhanh.
+- Giảm các thao tác request/decode lại không cần thiết.
+
+Tuy nhiên, cache cũng có thể giữ dữ liệu trong RAM.
+
+Do đó:
+
+> Memory cao hơn tại một Profiler snapshot không tự động đồng nghĩa với hiệu năng tổng thể kém hơn.
+
+---
+
+## 4.3 Technical Background – Disk Cache
+
+Disk Cache lưu dữ liệu hình ảnh trên bộ nhớ thiết bị.
+
+```text
+Memory Cache
+→ nhanh
+→ nằm trong RAM
+
+Disk Cache
+→ chậm hơn Memory Cache
+→ lưu trên storage
+→ có thể duy trì dữ liệu lâu hơn
+```
+
+Disk Cache có ý nghĩa khi:
+
+- Reload hình ảnh.
+- Mở lại nội dung đã tải.
+- Network không ổn định.
+- Thiết bị offline nhưng dữ liệu cần thiết đã được cache.
+
+Ảnh chưa từng được cache vẫn cần network để tải.
+
+---
+
+## 4.4 Technical Background – Resize / Downsampling
+
+Ảnh tải từ Internet có thể có độ phân giải lớn hơn nhiều so với kích thước thực tế cần hiển thị.
+
+Ví dụ:
+
+```text
+Large Source Image
+       ↓
+Small UI Thumbnail
+```
+
+Nếu decode ảnh ở kích thước lớn không cần thiết, ứng dụng có thể sử dụng nhiều bộ nhớ hơn.
+
+OPTIMIZED vì vậy sử dụng kích thước request phù hợp với UI:
+
+```text
+Product List
+→ Smaller requested image
+
+Product Detail
+→ Larger requested image
+```
+
+Mục tiêu:
+
+- Hạn chế oversized decode.
+- Giảm dữ liệu hình ảnh cần xử lý.
+- Sử dụng bộ nhớ phù hợp hơn với vùng hiển thị.
+
+---
+
+## 4.5 BASELINE Implementation
+
+BASELINE tạo request cơ bản:
+
+```kotlin
+ImageRequest.Builder(context)
+    .data(imageUrl)
+    .build()
+```
+
+BASELINE được sử dụng làm mốc để đánh giá trạng thái trước khi bổ sung các configuration tối ưu.
+
+---
+
+## 4.6 OPTIMIZED Implementation
+
+OPTIMIZED sử dụng:
+
+```kotlin
+ImageRequest.Builder(context)
+    .data(imageUrl)
+    .size(width, height)
+    .memoryCachePolicy(CachePolicy.ENABLED)
+    .diskCachePolicy(CachePolicy.ENABLED)
+    .build()
+```
+
+Các kỹ thuật chính:
+
+- Explicit image size.
+- Memory Cache.
+- Disk Cache.
+- Async Loading.
+- Lazy Loading.
+- Loading / Error Handling.
+
+---
+
+## 4.7 ImageMode & ImageRequestFactory
+
+Hai mode:
 
 ```kotlin
 enum class ImageMode {
@@ -448,32 +514,7 @@ enum class ImageMode {
 }
 ```
 
-Chế độ được chọn thông qua:
-
-```kotlin
-object ImageConfig {
-    var currentMode = ImageMode.OPTIMIZED
-}
-```
-
-## Why One Project Instead of Two
-
-Không cần duy trì hai project riêng biệt.
-
-Việc sử dụng `ImageMode` giúp:
-
-- Giữ cùng UI.
-- Giữ cùng dataset.
-- Giữ cùng image source.
-- Chuyển mode dễ dàng.
-- Hạn chế sai lệch khi test.
-- Dễ so sánh BASELINE và OPTIMIZED.
-
----
-
-# 14. ImageRequestFactory
-
-`ImageRequestFactory.kt` tập trung logic tạo request.
+Request được tập trung trong `ImageRequestFactory.kt`:
 
 ```text
 Image URL
@@ -481,81 +522,53 @@ Image URL
 ImageRequestFactory
     ↓
 Check ImageMode
-   ↙          ↘
-BASELINE    OPTIMIZED
-   ↓            ↓
-Basic       Cache / Resize
-Request      Strategy
-   ↘            ↙
+   ↙         ↘
+BASELINE   OPTIMIZED
+   ↓           ↓
+Basic      Size + Cache
+Request       Request
+   ↘           ↙
         Coil
           ↓
       AsyncImage
 ```
 
-## Why Factory Is Used
+Việc sử dụng cùng một project giúp:
 
-Factory giúp:
-
-- Tránh lặp code.
-- Tập trung cấu hình image request.
-- Chuyển BASELINE/OPTIMIZED dễ hơn.
-- Giảm nguy cơ hai phiên bản sử dụng UI khác nhau.
-- Thuận tiện cho performance testing.
-
----
-
-# 15. BASELINE Mode
-
-BASELINE đại diện cho trạng thái trước khi áp dụng đầy đủ chiến lược tối ưu.
-
-Nó được dùng làm mốc để đánh giá:
-
-- First Load.
-- Reload.
-- Fast Scroll.
-- Memory.
-- High-resolution image.
-- Offline behavior.
-- Slow/error network.
-- Dataset scaling.
-
-BASELINE không phải một ứng dụng riêng.
-
-Nó là một configuration của cùng project để đảm bảo phép so sánh công bằng hơn.
+- Giữ cùng UI.
+- Giữ cùng dataset.
+- Giữ cùng image source.
+- Giữ cùng functionality.
+- Chuyển mode nhanh.
+- Hạn chế sai lệch khi performance testing.
 
 ---
 
-# 16. OPTIMIZED Mode
-
-OPTIMIZED áp dụng các kỹ thuật chính:
-
-- Memory Cache.
-- Disk Cache.
-- Resize/downsampling.
-- Thumbnail strategy.
-- Async loading.
-- Lazy loading.
-- Loading/error states.
-
-Mục tiêu là cải thiện toàn bộ pipeline:
+## 4.8 Evidence
 
 ```text
-Network
-   ↓
-Image Request
-   ↓
-Cache
-   ↓
-Decode / Resize
-   ↓
-Display
+evidence/stage 3/
 ```
 
-thay vì chỉ tập trung vào một chỉ số Memory duy nhất.
+Evidence bao gồm:
+
+- BASELINE configuration.
+- OPTIMIZED configuration.
+- `ImageConfig`.
+- `ImageRequestFactory`.
+- Source comparison.
 
 ---
 
-# 17. Stage 4 – Performance Testing
+## 4.9 Result
+
+Stage 3 hoàn thành hai configuration có thể tái hiện trong cùng project.
+
+Ứng dụng sẵn sàng chuyển sang giai đoạn thực nghiệm để đánh giá các kỹ thuật tối ưu bằng evidence thực tế.
+
+---
+
+# 5. Stage 4 – Performance Testing
 
 ## Status
 
@@ -563,19 +576,33 @@ thay vì chỉ tập trung vào một chỉ số Memory duy nhất.
 COMPLETED
 ```
 
-Stage 4 tập trung kiểm thử thực nghiệm.
+## 5.1 Objective
 
-Test environment:
+Stage 4 tập trung kiểm tra BASELINE và OPTIMIZED trong nhiều tình huống khác nhau.
+
+Việc đánh giá không chỉ dựa trên Memory mà còn xem xét:
+
+- Image loading behavior.
+- Cache behavior.
+- UI responsiveness.
+- Error handling.
+- Offline behavior.
+- Stability.
+- Scalability.
+
+---
+
+## 5.2 Test Environment
 
 ```text
-Device: Pixel 5 Emulator
-Android: Android 11
-API: 30
-Image Source: Picsum Photos
-Profiler: Android Studio Profiler / Live Telemetry
+Device       : Pixel 5 Emulator
+Android      : Android 11
+API          : 30
+Image Source : Picsum Photos
+Profiler     : Android Studio Profiler
 ```
 
-Các điều kiện chính được cố gắng giữ giống nhau giữa BASELINE và OPTIMIZED:
+Các điều kiện chính được cố gắng giữ giống nhau:
 
 - Emulator.
 - Android version.
@@ -586,17 +613,11 @@ Các điều kiện chính được cố gắng giữ giống nhau giữa BASELI
 - Test procedure.
 - Profiler.
 
-Điều này giúp hạn chế việc kết quả bị ảnh hưởng bởi thay đổi môi trường thay vì thay đổi optimization strategy.
-
 ---
 
-# 18. TC01 – First Load
+## 5.3 TC01 – First Load
 
-## Purpose
-
-Đánh giá trạng thái khi ứng dụng tải danh sách ảnh lần đầu.
-
-## Procedure
+**Purpose:** Đánh giá trạng thái khi ứng dụng tải hình ảnh lần đầu.
 
 ```text
 Clear App Data
@@ -605,144 +626,133 @@ Select Image Mode
       ↓
 Run Application
       ↓
-Start Profiler
+Open Profiler
       ↓
-Load Product Images
-      ↓
-Observe Memory / CPU
+Load Images
 ```
 
-## Result Snapshot
+### Result Snapshot
 
 ```text
 BASELINE  = 110.9 MB
 OPTIMIZED = 152.8 MB
 ```
 
-Optimized cao hơn:
+OPTIMIZED có Memory snapshot cao hơn trong lần đo này.
+
+Kết quả cho thấy optimization không thể được đánh giá chỉ dựa trên một snapshot vì cache và runtime state có thể ảnh hưởng đến Memory.
+
+Evidence:
 
 ```text
-+41.9 MB
-+37.8%
+evidence/stage 4/TC01_First_Load/
 ```
-
-## Interpretation
-
-Optimized không luôn có Memory snapshot thấp hơn.
-
-Cache và dữ liệu ảnh được giữ lại trong runtime có thể làm snapshot cao hơn tại một thời điểm.
-
-Vì vậy kết quả này không được sử dụng riêng lẻ để kết luận phiên bản nào tốt hơn.
 
 ---
 
-# 19. TC02 – Cache Hit / Reload
+## 5.4 TC02 – Cache Hit
 
-## Purpose
+**Purpose:** Đánh giá khả năng tái sử dụng hình ảnh đã được tải.
 
-Đánh giá khả năng tái sử dụng ảnh khi nội dung được mở lại.
-
-## Result Snapshot
+### Result Snapshot
 
 ```text
 BASELINE  = 114.3 MB
 OPTIMIZED = 131.6 MB
 ```
 
-## Observation
+OPTIMIZED có Memory snapshot cao hơn, nhưng dữ liệu cache có thể được giữ lại để hỗ trợ reuse.
 
-Optimized có Memory snapshot cao hơn, nhưng ảnh đã tải có thể được tái sử dụng thông qua cache.
-
-Điều này minh họa trade-off:
+Điều này thể hiện trade-off giữa:
 
 ```text
-More cached data
-        ↓
-Potentially higher memory snapshot
-        ↓
-Faster reuse of previously loaded images
+Cache Retention
+      ↕
+Memory Usage
+      ↕
+Image Reuse
+```
+
+Evidence:
+
+```text
+evidence/stage 4/TC02_Cache_Hit/
 ```
 
 ---
 
-# 20. TC03 – Fast Scroll
+## 5.5 TC03 – Fast Scroll
 
-## Purpose
+**Purpose:** Kiểm tra ứng dụng khi scroll nhanh qua danh sách hình ảnh.
 
-Kiểm tra ứng dụng khi cuộn nhanh qua danh sách ảnh.
-
-Theo dõi:
-
-- Memory.
-- CPU activity.
-- UI responsiveness.
-- Image loading.
-- Placeholder behavior.
-- Crash.
-- OutOfMemoryError.
-
-## Result Snapshot
+### Result Snapshot
 
 ```text
 BASELINE  = 114.2 MB
 OPTIMIZED = 141.7 MB
 ```
 
-Cả hai phiên bản vẫn phản hồi trong các lần kiểm thử được ghi nhận và không xảy ra crash/OOM.
+Trong các lần test:
 
-Không sử dụng một Memory snapshot duy nhất để khẳng định scroll performance tốt hay xấu.
+- UI vẫn phản hồi.
+- Hình ảnh tiếp tục được tải.
+- Placeholder hoạt động.
+- Không ghi nhận crash.
+- Không ghi nhận OutOfMemoryError.
+
+Evidence:
+
+```text
+evidence/stage 4/TC03_Fast_Scroll/
+```
 
 ---
 
-# 21. TC04 – High Resolution Image
+## 5.6 TC04 – High Resolution
 
-## Purpose
+**Purpose:** Đánh giá việc xử lý hình ảnh lớn trên Product Detail.
 
-Đánh giá xử lý ảnh lớn trên Detail Screen.
-
-## Result
+### Result Snapshot
 
 ```text
 BASELINE  = 120.3 MB
 OPTIMIZED = 115.5 MB
 
 Difference = -4.8 MB
-           = -4.0%
+            ≈ -4.0%
 ```
 
-## Interpretation
+Ở snapshot này, OPTIMIZED có Memory thấp hơn BASELINE.
 
-Đây là testcase thể hiện rõ hơn lợi ích của resize/downsampling.
+Kết quả cho thấy lợi ích của việc request hình ảnh với kích thước phù hợp hơn với vùng hiển thị.
 
-OPTIMIZED hạn chế xử lý ảnh lớn hơn nhu cầu hiển thị, từ đó giảm Memory snapshot tại thời điểm đo.
+Evidence:
+
+```text
+evidence/stage 4/TC04_High_Resolution/
+```
 
 ---
 
-# 22. TC05 – Offline
+## 5.7 TC05 – Offline
 
-## Purpose
-
-Kiểm tra vai trò của cache khi mất kết nối Internet.
-
-## Procedure
+**Purpose:** Kiểm tra vai trò của cache khi thiết bị mất kết nối Internet.
 
 ```text
 Load Images Online
        ↓
-Images Available
-       ↓
 Disable Network
        ↓
-Access Images
+Access Images Again
        ↓
 Observe Cached / Uncached Images
 ```
 
-## Result
+### Result
 
-Ảnh đã có dữ liệu cache có thể tiếp tục được sử dụng tùy trạng thái cache.
+Hình ảnh đã được cache có thể tiếp tục được sử dụng tùy trạng thái cache.
 
-Ảnh chưa cache:
+Hình chưa được cache:
 
 ```text
 No Network
@@ -752,15 +762,19 @@ Request Failure
 Error Placeholder
 ```
 
-Điều quan trọng là cache không thể tạo ra dữ liệu cho một ảnh chưa từng được tải.
+Cache không thể tạo dữ liệu cho một hình ảnh chưa từng được tải.
+
+Evidence:
+
+```text
+evidence/stage 4/TC05_Offline/
+```
 
 ---
 
-# 23. TC06 – Bad URL / Slow Network
+## 5.8 TC06 – Bad URL / Slow Server
 
-## Purpose
-
-Kiểm tra khả năng xử lý các điều kiện mạng không lý tưởng.
+**Purpose:** Kiểm tra ứng dụng trong các điều kiện network không lý tưởng.
 
 Đã kiểm tra:
 
@@ -769,92 +783,86 @@ Kiểm tra khả năng xử lý các điều kiện mạng không lý tưởng.
 - Failed request.
 - HTTP 503.
 
-## Expected Behavior
+### Result
 
-```text
-Slow Request
-    ↓
-Loading Placeholder
-```
-
-hoặc:
-
-```text
-Failed Request
-    ↓
-Error Placeholder
-```
-
-## Result
-
-Trong các lần kiểm thử được ghi nhận:
-
-- UI vẫn phản hồi.
 - Loading state hoạt động.
 - Error state hoạt động.
+- UI vẫn phản hồi.
 - Không ghi nhận crash.
+
+Evidence:
+
+```text
+evidence/stage 4/TC06_BadURL_SlowServer/
+```
 
 ---
 
-# 24. TC07 – Dataset Scaling
+## 5.9 TC07 – Dataset Scaling
 
-## Purpose
-
-Đánh giá khả năng mở rộng khi số lượng sản phẩm tăng.
-
-Datasets:
+**Purpose:** Đánh giá ứng dụng khi dataset tăng:
 
 ```text
-100
-500
-1000
+100 → 500 → 1000 products
 ```
 
-Cả BASELINE và OPTIMIZED đều được kiểm tra.
+### Results
 
-## Results
-
-| Dataset | Baseline | Optimized | Difference |
+| Dataset | BASELINE | OPTIMIZED | Difference |
 |---|---:|---:|---:|
 | 100 | 130.4 MB | 117.4 MB | -13.0 MB (-10.0%) |
 | 500 | 137.7 MB | 136.4 MB | -1.3 MB (-0.9%) |
 | 1000 | 136.2 MB | 128.7 MB | -7.5 MB (-5.5%) |
 
-## Interpretation
-
-Ở cả ba snapshot của TC07:
+Trong cả ba snapshot:
 
 ```text
-Optimized < Baseline
+OPTIMIZED < BASELINE
 ```
 
-Ứng dụng cũng đã scroll đến:
+Ứng dụng đã được kiểm tra đến 1000 products mà không ghi nhận OutOfMemoryError.
+
+Các giá trị trên là **Profiler snapshots**, không phải average Memory usage của toàn bộ phiên test.
+
+Memory cũng không tăng tuyến tính theo số lượng products do ảnh hưởng của LazyColumn, cache, Garbage Collection và runtime state.
+
+Evidence:
 
 ```text
-Product 100
-Product 500
-Product 1000
+evidence/stage 4/TC07_Dataset_Scaling/
 ```
-
-mà không ghi nhận OutOfMemoryError trong các lần test.
-
-Các giá trị trên là **Profiler snapshots**, không phải average memory usage của toàn bộ quá trình.
 
 ---
 
-# 25. Stage 5 – Final Analysis & Deliverables
+## 5.10 Stage 4 Result
 
-## Current Status
+Toàn bộ TC01–TC07 đã hoàn thành.
+
+Stage 4 cho thấy không thể đánh giá optimization chỉ bằng câu hỏi:
 
 ```text
-IN PROGRESS
+Which mode uses less RAM?
 ```
 
-Stage 5 hiện đã bắt đầu.
+Mà cần xem xét đồng thời:
+
+```text
+Memory
++
+Cache
++
+Image Processing
++
+Network Behavior
++
+Stability
++
+Scalability
+```
 
 ---
 
-# 26. TC08 – Before vs After Comparison
+# 6. Stage 5 – Final Analysis & Deliverables
 
 ## Status
 
@@ -862,9 +870,29 @@ Stage 5 hiện đã bắt đầu.
 COMPLETED
 ```
 
+## 6.1 Objective
+
+Stage 5 là giai đoạn tổng hợp toàn bộ kết quả, đưa project về final configuration và hoàn thiện các deliverable.
+
+Các công việc chính:
+
+- TC08.
+- Final performance analysis.
+- Final configuration.
+- APK.
+- APK verification.
+- Report.
+- README.
+- Evidence organization.
+- Final Git repository.
+
+---
+
+## 6.2 TC08 – Before vs After Comparison
+
 TC08 không chạy một testcase mới.
 
-Nó tổng hợp dữ liệu từ:
+TC08 tổng hợp:
 
 ```text
 TC01
@@ -876,7 +904,7 @@ TC06
 TC07
 ```
 
-để đánh giá:
+để so sánh:
 
 ```text
 BASELINE
@@ -884,46 +912,16 @@ BASELINE
 OPTIMIZED
 ```
 
-## Completed Evidence
+Evidence:
 
 ```text
-TC08_Before_After_Comparison/
+evidence/stage 5/TC08_Before_After_Comparison/
 ├── TC08_01_Summary_Table.jpg
 ├── TC08_02_Memory_Comparison.png
 └── TC08_03_Analysis_Conclusion.jpg
 ```
 
-### TC08_01
-
-Tổng hợp:
-
-- Test objective.
-- Test condition.
-- Baseline result.
-- Optimized result.
-- Difference.
-- Evaluation.
-- Conclusion.
-
-### TC08_02
-
-Biểu đồ Memory so sánh:
-
-```text
-TC01
-TC02
-TC03
-TC04
-TC07-100
-TC07-500
-TC07-1000
-```
-
-TC05 và TC06 không đưa vào Memory chart vì các testcase này chủ yếu đánh giá behavior khi offline/error/slow network.
-
-### TC08_03
-
-Phân tích tổng hợp theo ba nhóm:
+TC08 tổng hợp ba nhóm chính:
 
 ```text
 Memory & Image Processing
@@ -933,353 +931,31 @@ Scalability
 
 ---
 
-# 27. TC08 Overall Interpretation
+## 6.3 Final Analysis
 
-Kết quả cho thấy OPTIMIZED không luôn có Memory snapshot thấp hơn BASELINE.
-
-Cụ thể:
+Kết quả cho thấy:
 
 ```text
 TC01–TC03
-Optimized Memory Snapshot > Baseline
+OPTIMIZED Memory Snapshot > BASELINE
 ```
 
 Trong khi:
 
 ```text
 TC04
-Optimized < Baseline
-```
-
-và:
-
-```text
 TC07-100
 TC07-500
 TC07-1000
 
-Optimized < Baseline
+OPTIMIZED Memory Snapshot < BASELINE
 ```
 
-Do đó không nên kết luận optimization chỉ dựa trên một Memory snapshot.
+Do đó:
 
-Việc đánh giá phải kết hợp:
+> OPTIMIZED không đồng nghĩa với việc luôn sử dụng ít RAM hơn tại mọi thời điểm.
 
-- Memory.
-- Cache behavior.
-- Image processing.
-- Error handling.
-- Stability.
-- Scalability.
-
----
-
-# 28. Final Configuration
-
-## Status
-
-```text
-COMPLETED
-```
-
-Sau khi TC07 hoàn thành, dataset được đưa về cấu hình chính thức:
-
-```kotlin
-return List(size = 100) { index ->
-```
-
-Final mode:
-
-```kotlin
-var currentMode = ImageMode.OPTIMIZED
-```
-
-## Why
-
-`100 products` là dataset chính của application demo.
-
-`500` và `1000` chỉ được sử dụng trong TC07 để kiểm tra scalability.
-
-OPTIMIZED được chọn làm configuration cuối vì đây là phiên bản chứa các kỹ thuật tối ưu cần trình bày trong sản phẩm cuối.
-
----
-
-# 29. APK Build
-
-## Status
-
-```text
-BUILD COMPLETED
-```
-
-Debug APK đã được generate thành công.
-
-Final APK copy:
-
-```text
-pic/stage 5/APK/ImageOptimizationApp.apk
-```
-
-Evidence:
-
-```text
-Stage5_APK_Generated.png
-Stage5_APK_Build_Success.png
-```
-
-APK hiện có kích thước khoảng:
-
-```text
-12.7 MB
-```
-
-## Remaining APK Task
-
-Cần kiểm tra lại APK bằng cách:
-
-```text
-Install APK
-    ↓
-Open Application
-    ↓
-Verify OPTIMIZED mode
-    ↓
-Load Product List
-    ↓
-Scroll
-    ↓
-Open Detail
-    ↓
-Back to List
-```
-
----
-
-# 30. Evidence Structure – Current
-
-```text
-pic/
-│
-├── stage 1/
-│   └── Basic Application
-│
-├── stage 2/
-│   └── Coil / Loading / Error Evidence
-│
-├── stage 3/
-│   └── Baseline / Optimized Evidence
-│
-├── stage 4/
-│   ├── TC01_First_Load/
-│   ├── TC02_Cache_Hit/
-│   ├── TC03_Fast_Scroll/
-│   ├── TC04_High_Resolution/
-│   ├── TC05_Offline/
-│   ├── TC06_Error_Slow_Network/
-│   └── TC07_Dataset_Scaling/
-│
-└── stage 5/
-    ├── TC08_Before_After_Comparison/
-    │   ├── TC08_01_Summary_Table.jpg
-    │   ├── TC08_02_Memory_Comparison.png
-    │   └── TC08_03_Analysis_Conclusion.jpg
-    │
-    ├── Final_Configuration/
-    │   ├── Final_01_Optimized_Mode.png
-    │   └── Final_02_100_Products.png
-    │
-    └── APK/
-        ├── ImageOptimizationApp.apk
-        ├── Stage5_APK_Generated.png
-        └── Stage5_APK_Build_Success.png
-```
-
----
-
-# 31. Current Progress
-
-```text
-Stage 1  ██████████  COMPLETED
-Stage 2  ██████████  COMPLETED
-Stage 3  ██████████  COMPLETED
-Stage 4  ██████████  COMPLETED
-Stage 5  ███████░░░  IN PROGRESS
-```
-
-## Stage 5 Checklist
-
-```text
-[✓] TC08 – Before vs After Comparison
-[✓] TC08 Summary Table
-[✓] TC08 Memory Chart
-[✓] TC08 Analysis & Conclusion
-[✓] Final dataset → 100 products
-[✓] Final mode → OPTIMIZED
-[✓] Build APK
-[ ] Final APK installation test
-[ ] Video Demo
-[ ] Final Performance Analysis
-[ ] D1 – Theory
-[ ] D2 – Design
-[ ] D3 – Source / Git
-[ ] D4 – Image Loading / Cache
-[ ] D5 – Baseline / Optimized
-[ ] D6 – Test Cases / Results
-[ ] D7 – Performance Analysis
-[ ] D8 – APK / Video / Documentation
-[ ] Final README
-```
-
----
-
-# 32. What Should Be Done Next?
-
-Thành viên tiếp tục project nên làm theo thứ tự:
-
-```text
-1. Test final APK
-        ↓
-2. Record Video Demo
-        ↓
-3. Complete Performance Analysis
-        ↓
-4. Complete D1–D8
-        ↓
-5. Update Final README
-        ↓
-6. Final Git Commit / Push
-        ↓
-7. Prepare Submission
-```
-
-Không cần chạy lại TC01–TC07 nếu evidence hiện tại vẫn đầy đủ và không có thay đổi ảnh hưởng đến implementation đã kiểm thử.
-
----
-
-# 33. Deliverables
-
-Các deliverables cuối cùng:
-
-| Deliverable | Nội dung | Status |
-|---|---|---|
-| D1 | Theory / Technical Background | Pending |
-| D2 | Application & Solution Design | Pending |
-| D3 | Kotlin Source + Git Repository | In Progress |
-| D4 | Image Loading / Caching Module | Implemented |
-| D5 | BASELINE / OPTIMIZED Implementation | Implemented |
-| D6 | Test Cases / Experimental Results | Mostly Completed |
-| D7 | Performance Analysis / Report | In Progress |
-| D8 | APK / Video / README | In Progress |
-
----
-
-# 34. Important Notes for Team Members
-
-### Do not change the final dataset without a reason
-
-Final configuration:
-
-```kotlin
-List(size = 100)
-```
-
-500 và 1000 chỉ dùng cho scalability testing.
-
-### Do not leave the app in BASELINE mode
-
-Final configuration:
-
-```kotlin
-ImageMode.OPTIMIZED
-```
-
-### Do not interpret Profiler snapshots as averages
-
-Ví dụ:
-
-```text
-136.2 MB
-128.7 MB
-```
-
-là giá trị tại thời điểm screenshot.
-
-Chúng không đại diện cho average memory của toàn bộ phiên test.
-
-### Keep the same test environment if retesting is necessary
-
-Preferred environment:
-
-```text
-Pixel 5
-Android 11
-API 30
-```
-
-Nếu thay đổi emulator hoặc API level, kết quả mới không nên được so sánh trực tiếp với kết quả cũ mà không ghi rõ thay đổi môi trường.
-
-### Preserve existing evidence
-
-Không xóa các folder:
-
-```text
-stage 1
-stage 2
-stage 3
-stage 4
-stage 5
-```
-
-vì chúng được sử dụng cho report và final submission.
-
----
-
-# 35. Current Handoff Point
-
-Project hiện đang ở trạng thái:
-
-```text
-Implementation      → COMPLETED
-Stage 1–4           → COMPLETED
-TC01–TC07           → COMPLETED
-TC08                → COMPLETED
-Final Configuration → COMPLETED
-APK Build           → COMPLETED
-APK Final Test      → NEXT
-Video Demo          → PENDING
-D1–D8               → PENDING / IN PROGRESS
-Final README        → PENDING
-```
-
-## Next Immediate Task
-
-```text
-Install and verify ImageOptimizationApp.apk
-```
-
-Sau khi APK được xác nhận hoạt động:
-
-```text
-Video Demo
-    ↓
-D1–D8
-    ↓
-Final README
-    ↓
-Final Submission
-```
-
----
-
-# 36. Final Technical Principle
-
-Mục tiêu của project không phải chứng minh rằng:
-
-```text
-OPTIMIZED always uses less RAM
-```
-
-mà là đánh giá liệu một pipeline xử lý ảnh có:
+Optimization được đánh giá dựa trên toàn bộ pipeline:
 
 ```text
 Async Loading
@@ -1292,31 +968,284 @@ Disk Cache
       +
 Resize / Downsampling
       +
-Thumbnail Strategy
+Error Handling
+      ↓
+Optimized Image Loading Pipeline
+```
+
+---
+
+## 6.4 Final Configuration
+
+Dataset được đưa về:
+
+```kotlin
+List(size = 100)
+```
+
+Final mode:
+
+```kotlin
+ImageMode.OPTIMIZED
+```
+
+100 products được sử dụng cho final application và demo.
+
+500 và 1000 products chỉ được sử dụng trong TC07 – Dataset Scaling.
+
+Evidence:
+
+```text
+evidence/stage 5/Final_Configuration/
+├── Final_01_Optimized_Mode.png
+└── Final_02_100_Products.png
+```
+
+---
+
+## 6.5 Final APK
+
+Final APK đã được build, cài đặt và kiểm tra.
+
+```text
+evidence/stage 5/APK/
+├── ImageOptimizationApp.apk
+├── Stage5_APK_Build_Success.png
+├── Stage5_APK_Generated.png
+├── Stage5_APK_Installation.png
+└── Stage5_APK_Verification.png
+```
+
+Quy trình đã hoàn thành:
+
+```text
+Build APK
+    ↓
+Generate APK
+    ↓
+Install APK
+    ↓
+Open Application
+    ↓
+Verify Product List
+    ↓
+Verify Product Detail
+    ↓
+Final Verification
+```
+
+**Status: COMPLETED**
+
+---
+
+## 6.6 Final Report
+
+Báo cáo cuối cùng đã được hoàn thiện với cấu trúc:
+
+```text
+Chapter 1 – Cơ sở lý thuyết
+Chapter 2 – Phân tích và thiết kế
+Chapter 3 – Cài đặt và tối ưu
+Chapter 4 – Phương pháp và kịch bản thực nghiệm
+Chapter 5 – Kết quả và phân tích hiệu năng
+Chapter 6 – Sản phẩm và kết luận
+References – Tài liệu tham khảo
+```
+
+Các hình ảnh sử dụng trong report được lưu tại:
+
+```text
+evidence/stage 5/Report/
+```
+
+**Status: COMPLETED**
+
+---
+
+## 6.7 README
+
+`README.md` đã được hoàn thiện để hướng dẫn:
+
+- Project overview.
+- Clone repository.
+- Build project.
+- Run application.
+- Sử dụng Product List / Product Detail.
+- Chuyển BASELINE / OPTIMIZED.
+- Thay đổi dataset.
+- Performance testing.
+- Evidence.
+- APK.
+- Demo Video.
+
+Phân biệt:
+
+```text
+README.md
+→ Hướng dẫn sử dụng / reproduce project
+
+PROGRESS.md
+→ Quá trình nghiên cứu / phát triển / kiểm thử
+```
+
+**Status: COMPLETED**
+
+---
+
+## 6.8 Final Evidence Structure
+
+```text
+evidence/
+│
+├── stage 1/
+│   └── Basic Application
+│
+├── stage 2/
+│   └── Coil / Loading / Error
+│
+├── stage 3/
+│   └── BASELINE / OPTIMIZED
+│
+├── stage 4/
+│   ├── TC01_First_Load/
+│   ├── TC02_Cache_Hit/
+│   ├── TC03_Fast_Scroll/
+│   ├── TC04_High_Resolution/
+│   ├── TC05_Offline/
+│   ├── TC06_BadURL_SlowServer/
+│   └── TC07_Dataset_Scaling/
+│
+└── stage 5/
+    ├── APK/
+    ├── Final_Configuration/
+    ├── Report/
+    └── TC08_Before_After_Comparison/
+```
+
+---
+
+## 6.9 Video Demo
+
+Video Demo là phần duy nhất chưa được gắn link vào repository.
+
+Dự kiến video trình bày:
+
+- Application startup.
+- Product List.
+- Product Detail.
+- Loading state.
+- Error state.
+- BASELINE.
+- OPTIMIZED.
+- Performance testing.
+- Android Studio Profiler.
+- Final APK.
+
+```text
+YouTube Demo:
+[LINK WILL BE UPDATED]
+```
+
+**Status: PENDING YOUTUBE LINK**
+
+---
+
+# 7. Final Deliverables
+
+| Deliverable | Nội dung | Status |
+|---|---|---|
+| D1 | Theory / Technical Background | COMPLETED |
+| D2 | Application & Solution Design | COMPLETED |
+| D3 | Kotlin Source + Git Repository | COMPLETED |
+| D4 | Image Loading / Caching Module | COMPLETED |
+| D5 | BASELINE / OPTIMIZED | COMPLETED |
+| D6 | Test Cases / Experimental Results | COMPLETED |
+| D7 | Performance Analysis | COMPLETED |
+| D8 | APK / Documentation | COMPLETED |
+| Video | YouTube Demo | PENDING LINK |
+
+---
+
+# 8. Final Project Status
+
+```text
+Stage 1               → COMPLETED
+Stage 2               → COMPLETED
+Stage 3               → COMPLETED
+Stage 4               → COMPLETED
+Stage 5               → COMPLETED
+
+Implementation        → COMPLETED
+BASELINE               → COMPLETED
+OPTIMIZED              → COMPLETED
+
+TC01–TC07             → COMPLETED
+TC08                  → COMPLETED
+
+Final Configuration   → COMPLETED
+APK                   → COMPLETED
+APK Verification      → COMPLETED
+Evidence              → COMPLETED
+Report                → COMPLETED
+README                → COMPLETED
+PROGRESS.md           → COMPLETED
+Git Repository        → COMPLETED
+
+Video Demo            → PENDING YOUTUBE LINK
+```
+
+Project hiện đã hoàn thành toàn bộ **nghiên cứu lý thuyết, implementation, optimization, testing, performance analysis, APK, evidence và documentation**.
+
+Công việc cuối cùng còn lại:
+
+```text
+Record / Upload Video Demo
+            ↓
+Add YouTube Link
+            ↓
+Final Submission
+```
+
+---
+
+# 9. Final Technical Conclusion
+
+Project không nhằm chứng minh:
+
+```text
+OPTIMIZED always uses less RAM
+```
+
+Thay vào đó, project đánh giá tác động của một image-loading pipeline gồm:
+
+```text
+Async Loading
+      +
+Lazy Loading
+      +
+Memory Cache
+      +
+Disk Cache
+      +
+Resize / Downsampling
       +
 Loading / Error Handling
 ```
 
-có thể tạo ra cách tải và hiển thị hình ảnh phù hợp hơn trong các tình huống sử dụng thực tế hay không.
+Kết quả TC01–TC08 cho thấy optimization tạo ra các trade-off khác nhau tùy điều kiện kiểm thử.
 
-Kết quả hiện tại cho thấy optimization tạo ra **trade-off**:
+Cache có thể làm Memory snapshot cao hơn tại một số thời điểm, trong khi resize/downsampling và controlled image requests có thể mang lại lợi ích trong các trường hợp khác.
+
+Vì vậy, kết quả cuối cùng được đánh giá dựa trên **toàn bộ experimental evidence** thay vì một giá trị Memory riêng lẻ.
+
+Final application:
 
 ```text
-Cache may retain more data
-        ↓
-Memory can be higher at some snapshots
-
-BUT
-
-Resize / Downsampling
-        +
-Cache Reuse
-        +
-Controlled Image Requests
-        +
-Scalability
-        ↓
-provide measurable benefits in other scenarios
+Dataset       : 100 products
+Mode          : OPTIMIZED
+APK           : COMPLETED
+Report        : COMPLETED
+Evidence      : COMPLETED
+Documentation : COMPLETED
+Video Demo    : PENDING YOUTUBE LINK
 ```
-
-Vì vậy kết luận cuối cùng phải dựa trên **toàn bộ experimental evidence**, không dựa trên một giá trị Memory riêng lẻ.
