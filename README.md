@@ -227,7 +227,7 @@ It can be installed directly on a compatible Android device for application veri
 
 A complete project demonstration will be available on YouTube.
 
-**YouTube Demo:** `To be updated`
+**YouTube Demo:** [`https://youtu.be/YDC49ASRBE0To be updated`](https://youtu.be/YDC49ASRBE0)
 
 The final link will be added after the demo video is completed.
 
